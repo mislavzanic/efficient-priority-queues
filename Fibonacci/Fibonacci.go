@@ -12,12 +12,12 @@ type node struct {
 	children *list.List
 
 	index    uint
-	val      int
+	val      float64
 	degree   uint
 	mark     bool
 }
 
-func newNode(value int) *node {
+func newNode(value float64) *node {
 	node := new(node)
 	node.children = list.New()
 	node.val = value
@@ -26,14 +26,15 @@ func newNode(value int) *node {
 
 type FibHeap struct {
 	min  *node
-	rootList *list.List
+	roots *list.List
 	size     uint
 }
 
 func NewFibHeap() *FibHeap {
 	return &FibHeap{
-		min:  nil,
-		size: 0,
+		min:   nil,
+		roots: list.New(),
+		size:  0,
 	}
 }
 
@@ -45,9 +46,9 @@ func (heap *FibHeap) Empty() bool {
 	return heap.size == 0
 }
 
-func (heap *FibHeap) insert(value int) {
+func (heap *FibHeap) Insert(value float64) {
 	node := newNode(value)
-	node.self = heap.rootList.PushBack(node)
+	node.self = heap.roots.PushBack(node)
 	heap.size++
 
 	if heap.min == nil || heap.min.val > value {
@@ -56,13 +57,13 @@ func (heap *FibHeap) insert(value int) {
 }
 
 func (heap *FibHeap) Union(other *FibHeap) {
-	for e := other.rootList.Front(); e != nil; e = e.Next() {
+	for e := other.roots.Front(); e != nil; e = e.Next() {
 		if e.Value.(*node) == other.min {
 			if heap.min == nil || heap.min.val > other.min.val {
 				heap.min = e.Value.(*node)
 			}
 		}
-		e.Value.(*node).self = heap.rootList.PushBack(e.Value)
+		e.Value.(*node).self = heap.roots.PushBack(e.Value)
 	}
 
 	heap.size += other.size;
@@ -75,14 +76,14 @@ func (heap *FibHeap) ExtractMin() *node {
 
 		for e := min.children.Front(); e != nil; e = e.Next() {
 			e.Value.(*node).parent = nil;
-			e.Value.(*node).self = heap.rootList.PushBack(e.Value)
+			e.Value.(*node).self = heap.roots.PushBack(e.Value)
 		}
 
-		heap.rootList.Remove(heap.min.self)
-		if heap.rootList.Len() == 0 {
+		heap.roots.Remove(heap.min.self)
+		if heap.roots.Len() == 0 {
 			heap.min = nil
 		} else {
-			heap.min = heap.rootList.Front().Value.(*node)
+			heap.min = heap.roots.Front().Value.(*node)
 			heap.consolidate()
 		}
 		heap.size--
@@ -97,7 +98,7 @@ func (heap *FibHeap) consolidate() {
 		degrees = append(degrees, nil)
 	}
 
-	for tree := heap.rootList.Front(); tree != nil; {
+	for tree := heap.roots.Front(); tree != nil; {
 
 		degree := tree.Value.(*node).degree
 
@@ -109,8 +110,8 @@ func (heap *FibHeap) consolidate() {
 		} else {
 			for degrees[tree.Value.(*node).degree] != nil {
 
-				otherTree := degrees[degree]
-				degrees[degree] = nil
+				otherTree := degrees[tree.Value.(*node).degree]
+				degrees[tree.Value.(*node).degree] = nil
 
 				if otherTree.Value.(*node).val < tree.Value.(*node).val {
 					heap.link(otherTree.Value.(*node), tree.Value.(*node))
@@ -127,21 +128,21 @@ func (heap *FibHeap) consolidate() {
 }
 
 func (heap *FibHeap) link(node *node, other *node) {
-	heap.rootList.Remove(other.self)
+	heap.roots.Remove(other.self)
 	other.mark = false
 	other.self = node.children.PushBack(other)
 	node.degree++
 }
 
 func (heap *FibHeap) resetMin() {
-	for root := heap.rootList.Front(); root != nil; root = root.Next() {
+	for root := heap.roots.Front(); root != nil; root = root.Next() {
 		if heap.min.val > root.Value.(*node).val {
 			heap.min = root.Value.(*node)
 		}
 	}
 }
 
-func (heap *FibHeap) DecreaseKey(node *node, val int) {
+func (heap *FibHeap) DecreaseKey(node *node, val float64) {
 	if node.val < val {
 		panic(fmt.Sprintf("Existing key is smaller than the new key"))
 	}
@@ -163,7 +164,7 @@ func (heap *FibHeap) cut(child *node, parent *node) {
 	parent.degree--
 	child.parent = nil
 	child.mark = false
-	child.self = heap.rootList.PushBack(child)
+	child.self = heap.roots.PushBack(child)
 }
 
 func (heap *FibHeap) cascadingCut(node *node) {
@@ -175,4 +176,9 @@ func (heap *FibHeap) cascadingCut(node *node) {
 			heap.cascadingCut(node.parent)
 		}
 	}
+}
+
+func (heap *FibHeap) Delete(node *node) {
+	heap.DecreaseKey(node, math.Inf(-1))
+	heap.ExtractMin()
 }

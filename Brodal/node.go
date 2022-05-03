@@ -1,18 +1,14 @@
 package main
 
-import (
-	"fmt"
-)
-
-type Node struct {
+type node struct {
     value int64
 	rank int
-	leftBrother     *Node
-	rightBrother    *Node
-	parent          *Node
-	leftmostSon     *Node
-	firstV          *Node
-	firstW          *Node
-	nextInViolating *Node
-	prevInViolating *Node
+	leftBrother     *node
+	rightBrother    *node
+	parent          *node
+	leftmostSon     *node
+	firstV          *node
+	firstW          *node
+	nextInViolating *node
+	prevInViolating *node
 }
