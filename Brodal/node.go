@@ -38,6 +38,26 @@ func (node *node) leftSon() *list.Element {
 	return node.children.Front()
 }
 
+func getMinNode(xNode *node, yNode *node, zNode *node) (*node, *node, *node) {
+	minNode := zNode
+
+	if xNode.value < minNode.value {
+		minNode = xNode
+		xNode = zNode
+	}
+
+	if yNode.value < minNode.value {
+		temp := minNode
+		minNode = yNode
+		yNode = temp
+	}
+
+	return minNode, xNode, yNode
+}
+
 func (node *node) link(xNode *node, yNode *node) {
+	xNode.self = node.children.PushFront(xNode)
+	yNode.self = node.children.PushFront(yNode)
+	node.rank++
 
 }

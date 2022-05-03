@@ -7,6 +7,12 @@ import (
 var UPPER_BOUND uint = 7
 var LOWER_BOUND uint = 4
 
+type reduceType byte
+const (
+	linkReduce   reduceType = 0
+	delinkReduce            = 1
+)
+
 type rootNode struct {
 	root          *node
 
@@ -90,39 +96,47 @@ func (bh *BrodalHeap) Meld(other *BrodalHeap) {
 
 func (tree *rootNode) insert(node *node) {
 	if node.rank < tree.root.rank - 2 {
-		// if operations,newVal := tree.upperBoundGuide.increase(node.rank, 1); uint(newVal) == UPPER_BOUND {
-
-			// for i := range operations {
-				// tree.reduce(i)
-			// }
-			// tree.upperBoundGuide.reduce(node.rank, 3)
-
-			// xNode, yNode := tree.childrenRank[node.rank], tree.childrenRank[node.rank].rightBrother
-			// minNode := node
-
-			// if minNode.value > xNode.value {
-			// 	minNode = xNode
-			// 	xNode = node
-			// }
-
-			// if minNode.value > yNode.value {
-			// 	temp := minNode
-			// 	minNode = yNode
-			// 	yNode = temp
-			// }
-
-			// minNode.link(xNode, yNode)
-
-			// tree.remove(tree.childrenRank[node.rank].rightBrother)
-			// tree.remove(tree.childrenRank[node.rank])
-
-			// tree.insert(minNode)
-		// }
+		actions := tree.upperBoundGuide.forceIncrease(node.rank, 3)
+		for _, act := range actions {
+			tree.performeAction(node, act, linkReduce)
+		}
+		tree.updateHighRank()
 	} else {
 
 	}
 }
 
-func (tree *rootNode) remove (node *node) {
+func (tree *rootNode) remove(node *node) {
+
+}
+
+func (tree *rootNode) performeAction(node *node, action action, reduceType reduceType) {
+	if reduceType == linkReduce {
+		tree.link(action.index)
+	} else {
+		tree.delink(action.index)
+	}
+}
+
+func (tree *rootNode) link(rank uint) {
+	nodeX := tree.childrenRank[rank]
+	nodeY, nodeZ := nodeX.rightBrother, nodeX.rightBrother.rightBrother
+
+	if nodeZ.rightBrother.rank == rank {
+		tree.childrenRank[rank] = nodeZ.rightBrother
+	} else {
+		tree.childrenRank[rank] = nil
+	}
+
+	minNode, nodeX, nodeY := getMinNode(nodeX, nodeY, nodeZ)
+
+	minNode.link(nodeX, nodeY)
+}
+
+func (tree *rootNode) delink(rank uint) {
+
+}
+
+func (tree *rootNode) updateHighRank() {
 
 }
