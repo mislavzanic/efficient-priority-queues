@@ -133,7 +133,11 @@ func (tree *rootNode) link(rank uint) {
 	minNode.link(nodeX, nodeY)
 }
 
-func (tree *rootNode) delink(rank uint) {
+func (tree *rootNode) delinkByRank(rank uint) {
+
+}
+
+func (tree *rootNode) delinkNode(node *node) {
 
 }
 

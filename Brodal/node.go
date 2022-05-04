@@ -55,9 +55,25 @@ func getMinNode(xNode *node, yNode *node, zNode *node) (*node, *node, *node) {
 	return minNode, xNode, yNode
 }
 
-func (node *node) link(xNode *node, yNode *node) {
-	xNode.self = node.children.PushFront(xNode)
-	yNode.self = node.children.PushFront(yNode)
-	node.rank++
+func (parent *node) removeChild(child *node) {
+	child.leftBrother.rightBrother = child.rightBrother
+	child.rightBrother.leftBrother = child.leftBrother
+	parent.children.Remove(child.self)
+}
 
+func (parent *node) addChild(child *node) {
+
+	if child.parent != nil {
+		child.parent.removeChild(child)
+	}
+
+	child.parent = parent
+	child.self = parent.children.PushFront(child)
+	// TODO dodavanje lijevog i desnog brata...
+}
+
+func (node *node) link(xNode *node, yNode *node) {
+	node.addChild(xNode)
+	node.addChild(yNode)
+	node.rank++
 }
