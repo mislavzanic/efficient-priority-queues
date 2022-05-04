@@ -68,8 +68,14 @@ func (parent *node) addChild(child *node) {
 	}
 
 	child.parent = parent
+
+	child.leftBrother = parent.children.Front().Value.(*node).leftBrother
+	child.rightBrother = parent.children.Front().Value.(*node)
+
+	parent.children.Front().Value.(*node).leftBrother.rightBrother = child
+	parent.children.Front().Value.(*node).leftBrother = child
+
 	child.self = parent.children.PushFront(child)
-	// TODO dodavanje lijevog i desnog brata...
 }
 
 func (node *node) link(xNode *node, yNode *node) {
