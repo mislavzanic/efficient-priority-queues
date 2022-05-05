@@ -102,7 +102,7 @@ func (tree *rootNode) insert(node *node) {
 		}
 		tree.updateHighRank()
 	} else {
-
+		// TODO insert for rank >= tree.root.rank - 2
 	}
 }
 
@@ -114,7 +114,7 @@ func (tree *rootNode) performeAction(node *node, action action, reduceType reduc
 	if reduceType == linkReduce {
 		tree.link(action.index)
 	} else {
-		tree.delink(action.index)
+		// tree.delink(action.index)
 	}
 }
 
@@ -133,8 +133,16 @@ func (tree *rootNode) link(rank uint) {
 	minNode.link(nodeX, nodeY)
 }
 
-func (tree *rootNode) delinkByRank(rank uint) {
+func (tree *rootNode) delink(rank uint) {
+	if rank == 0 {
+		panic("Rank is 0, node has no children")
+	}
 
+	if tree.childrenRank[rank].childrenRanks[rank - 1] <= 3 {
+
+	} else {
+
+	}
 }
 
 func (tree *rootNode) delinkNode(node *node) {

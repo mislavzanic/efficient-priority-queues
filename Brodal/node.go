@@ -15,6 +15,7 @@ type node struct {
 	parent          *node
 
 	children        *list.List
+	childrenRanks   []uint
 
 	vList           *list.List
 	wlist           *list.List
@@ -59,6 +60,7 @@ func (parent *node) removeChild(child *node) {
 	child.leftBrother.rightBrother = child.rightBrother
 	child.rightBrother.leftBrother = child.leftBrother
 	parent.children.Remove(child.self)
+	parent.childrenRanks[child.rank]--
 }
 
 func (parent *node) addChild(child *node) {
@@ -76,10 +78,21 @@ func (parent *node) addChild(child *node) {
 	parent.children.Front().Value.(*node).leftBrother = child
 
 	child.self = parent.children.PushFront(child)
+	parent.childrenRanks[child.rank]++
 }
 
 func (node *node) link(xNode *node, yNode *node) {
+
+	if xNode.rank + 1 != node.rank || yNode.rank + 1 != node.rank {
+		panic("Only allowed to link nodes of rank r(x) - 1")
+	}
+
 	node.addChild(xNode)
 	node.addChild(yNode)
 	node.rank++
+}
+
+
+func (node *node) delink(nodeArr []*node) *node {
+	return nil
 }
