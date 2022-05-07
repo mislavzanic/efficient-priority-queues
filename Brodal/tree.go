@@ -30,7 +30,7 @@ func (tree *tree) rank() uint {
 
 func (tree *tree) insert(node *node, isMinTree bool) {
 	if node.rank < tree.root.rank - 2 {
-		actions := tree.upperBoundGuide.forceIncrease(node.rank, 3)
+		actions := tree.upperBoundGuide.forceIncrease(int(node.rank), 3)
 		for _, act := range actions {
 			tree.performeAction(node, act, linkReduce)
 		}
@@ -61,7 +61,7 @@ func (tree *tree) incRank(node1 *node, node2 *node) {
 
 func (tree *tree) performeAction(node *node, action action, reduceType reduceType) {
 	if reduceType == linkReduce {
-		tree.link(action.index)
+		tree.link(uint(action.index))
 	} else {
 		// tree.delink(action.index)
 	}
@@ -113,32 +113,33 @@ func (tree *tree) handleHighRank(rank uint, isMinTree bool) {
 func (tree *tree) reduceViolaton(x1 *node, x2 *node) {
 	if x1.isGood() || x2.isGood() {
 		if x1.isGood() {
-			if x1.parentViolatingList != nil {
-				x1.parentViolatingList.Remove(x1.violatingSelf)
-				x1.parentViolatingList = nil
-			}
+			x1.removeSelfFromViolating()
 		}
 		if x2.isGood() {
-			if x2.parentViolatingList != nil {
-				x2.parentViolatingList.Remove(x2.violatingSelf)
-				x2.parentViolatingList = nil
-			}
+			x2.removeSelfFromViolating()
 		}
-
 	} else {
 		if x1.parent != x2.parent {
 			if x1.parent.value <= x2.parent.value {
-				brother := func () *node { if x2.leftBrother().rank == x2.rank { return x2.leftBrother() } else { return x2.rightBrother() }}()
-				x1.parent.addChild(brother, x1)
-				x2.parent.addChild(x1, x2)
+				x1.swapBrothers(x2)
 			} else {
-				brother := func () *node { if x1.leftBrother().rank == x1.rank { return x1.leftBrother() } else { return x1.rightBrother() }}()
-				x2.parent.addChild(brother, x2)
-				x1.parent.addChild(x2, x1)
+				x2.swapBrothers(x1)
 			}
 		}
 
-		// ...
+		if x1.parent.childrenRanks[x1.rank] == 2 {
+			if x1.parent.rank == x1.rank + 1 {
+				//... TODO -- after tree.cut() is finished
+			} else {
+				x1.parent.removeChild(x1)
+				x1.parent.removeChild(x2)
+				tree.insert(x1, true)
+				tree.insert(x2, true)
+			}
+		} else {
+			x1.parent.removeChild(x1)
+			tree.insert(x1, true)
+		}
 	}
 }
 

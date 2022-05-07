@@ -77,6 +77,12 @@ func getMinNode(xNode *node, yNode *node, zNode *node) (*node, *node, *node) {
 func (parent *node) removeChild(child *node) {
 	parent.children.Remove(child.self)
 	parent.childrenRanks[child.rank]--
+
+	if parent.childrenRanks[child.rank] == 0 {
+		if child.rank == parent.rank - 1 {
+			parent.rank = parent.leftSon().rank + 1
+		}
+	}
 }
 
 func (parent *node) addChild(child *node, newRightBrother *node) {
@@ -90,6 +96,12 @@ func (parent *node) addChild(child *node, newRightBrother *node) {
 	child.self = parent.children.InsertBefore(child, newRightBrother.self)
 
 	parent.childrenRanks[child.rank]++
+}
+
+func (this *node) swapBrothers(other *node) {
+	brother := func () *node { if other.leftBrother().rank == other.rank { return other.leftBrother() } else { return other.rightBrother() }}()
+	this.parent.addChild(brother, this)
+	other.parent.addChild(this, other)
 }
 
 func (node *node) incRank(subNode1 *node, subNode2 *node) {
@@ -124,4 +136,11 @@ func (parent *node) delink() *node {
 		parent.rank = parent.children.Front().Value.(*node).rank + 1
 	}
 	return child
+}
+
+func (this *node) removeSelfFromViolating() {
+	if this.parentViolatingList != nil {
+		this.parentViolatingList.Remove(this.violatingSelf)
+		this.parentViolatingList = nil
+	}
 }
