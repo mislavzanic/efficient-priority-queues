@@ -4,8 +4,8 @@ import (
 	"container/list"
 )
 
-var UPPER_BOUND uint = 7
-var LOWER_BOUND uint = 4
+var UPPER_BOUND int = 7
+var LOWER_BOUND int = -2
 
 type tree struct {
 	root          *node
@@ -37,13 +37,17 @@ func (tree *tree) insert(node *node, isMinTree bool) {
 		tree.handleHighRank(tree.root.rank - 2, isMinTree)
 		tree.handleHighRank(tree.root.rank - 1, isMinTree)
 	} else {
-		tree.root.addChild(node)
+		tree.root.addChild(node, tree.root.leftSon())
 		tree.handleHighRank(node.rank, isMinTree)
 	}
 
 	if !isMinTree {
 
 	}
+}
+
+func (tree *tree) cut(node *node, isMinTree bool) {
+
 }
 
 func (tree *tree) incRank(node1 *node, node2 *node) {
@@ -65,10 +69,10 @@ func (tree *tree) performeAction(node *node, action action, reduceType reduceTyp
 
 func (tree *tree) link(rank uint) {
 	nodeX := tree.childrenRank[rank]
-	nodeY, nodeZ := nodeX.rightBrother, nodeX.rightBrother.rightBrother
+	nodeY, nodeZ := nodeX.rightBrother(), nodeX.rightBrother().rightBrother()
 
-	if nodeZ.rightBrother.rank == rank {
-		tree.childrenRank[rank] = nodeZ.rightBrother
+	if nodeZ.rightBrother().rank == rank {
+		tree.childrenRank[rank] = nodeZ.rightBrother()
 	} else {
 		tree.childrenRank[rank] = nil
 	}
@@ -103,6 +107,38 @@ func (tree *tree) handleHighRank(rank uint, isMinTree bool) {
 			tree.insert(nodeSliceX[0], isMinTree)
 			tree.insert(nodeSliceY[1], isMinTree)
 		}
+	}
+}
+
+func (tree *tree) reduceViolaton(x1 *node, x2 *node) {
+	if x1.isGood() || x2.isGood() {
+		if x1.isGood() {
+			if x1.parentViolatingList != nil {
+				x1.parentViolatingList.Remove(x1.violatingSelf)
+				x1.parentViolatingList = nil
+			}
+		}
+		if x2.isGood() {
+			if x2.parentViolatingList != nil {
+				x2.parentViolatingList.Remove(x2.violatingSelf)
+				x2.parentViolatingList = nil
+			}
+		}
+
+	} else {
+		if x1.parent != x2.parent {
+			if x1.parent.value <= x2.parent.value {
+				brother := func () *node { if x2.leftBrother().rank == x2.rank { return x2.leftBrother() } else { return x2.rightBrother() }}()
+				x1.parent.addChild(brother, x1)
+				x2.parent.addChild(x1, x2)
+			} else {
+				brother := func () *node { if x1.leftBrother().rank == x1.rank { return x1.leftBrother() } else { return x1.rightBrother() }}()
+				x2.parent.addChild(brother, x2)
+				x1.parent.addChild(x2, x1)
+			}
+		}
+
+		// ...
 	}
 }
 

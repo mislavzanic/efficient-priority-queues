@@ -9,9 +9,8 @@ type node struct {
 	rank            uint
 
 	self            *list.Element
+	violatingSelf   *list.Element
 
-	leftBrother     *node
-	rightBrother    *node
 	parent          *node
 
 	children        *list.List
@@ -20,8 +19,7 @@ type node struct {
 	vList           *list.List
 	wList           *list.List
 
-	nextInViolating *node
-	prevInViolating *node
+	parentViolatingList *list.List
 }
 
 func mbySwapNode(ptr1 *node, ptr2 *node, cond bool) {
@@ -43,8 +41,16 @@ func newNode(value float64) *node {
 	return node
 }
 
-func (node *node) leftSon() *list.Element {
-	return node.children.Front()
+func (parent *node) leftSon() *node {
+	return parent.children.Front().Value.(*node)
+}
+
+func (this *node) leftBrother() *node {
+	return this.self.Prev().Value.(*node)
+}
+
+func (this *node) rightBrother() *node {
+	return this.self.Next().Value.(*node)
 }
 
 func (node *node) isGood() bool {
@@ -69,13 +75,11 @@ func getMinNode(xNode *node, yNode *node, zNode *node) (*node, *node, *node) {
 }
 
 func (parent *node) removeChild(child *node) {
-	child.leftBrother.rightBrother = child.rightBrother
-	child.rightBrother.leftBrother = child.leftBrother
 	parent.children.Remove(child.self)
 	parent.childrenRanks[child.rank]--
 }
 
-func (parent *node) addChild(child *node) {
+func (parent *node) addChild(child *node, newRightBrother *node) {
 
 	if child.parent != nil {
 		child.parent.removeChild(child)
@@ -83,13 +87,7 @@ func (parent *node) addChild(child *node) {
 
 	child.parent = parent
 
-	child.leftBrother = parent.children.Front().Value.(*node).leftBrother
-	child.rightBrother = parent.children.Front().Value.(*node)
-
-	parent.children.Front().Value.(*node).leftBrother.rightBrother = child
-	parent.children.Front().Value.(*node).leftBrother = child
-
-	child.self = parent.children.PushFront(child)
+	child.self = parent.children.InsertBefore(child, newRightBrother.self)
 
 	parent.childrenRanks[child.rank]++
 }
@@ -102,8 +100,8 @@ func (node *node) incRank(subNode1 *node, subNode2 *node) {
 
 	node.childrenRanks = append(node.childrenRanks, 0)
 
-	node.addChild(subNode1)
-	node.addChild(subNode2)
+	node.addChild(subNode1, node.leftSon())
+	node.addChild(subNode2, node.leftSon())
 }
 
 func (node *node) link(xNode *node, yNode *node) {
@@ -112,8 +110,8 @@ func (node *node) link(xNode *node, yNode *node) {
 		panic("Only allowed to link nodes of rank r(x) - 1")
 	}
 
-	node.addChild(xNode)
-	node.addChild(yNode)
+	node.addChild(xNode, node.leftSon())
+	node.addChild(yNode, node.leftSon())
 	node.rank++
 	node.parent.childrenRanks[node.rank]++
 }

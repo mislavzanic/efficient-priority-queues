@@ -1,12 +1,12 @@
 package Brodal
 
 type pair struct {
-	fst uint
-	snd uint
+	fst int
+	snd int
 }
 
 type guide struct {
-	upperBound uint
+	upperBound int
 	boundArray []pair
 	blocks     []**pair
 }
@@ -19,12 +19,12 @@ const (
 )
 
 type action struct {
-	index uint
+	index int
 	op    operation
-	value uint
+	value int
 }
 
-func newGuide(upperBound uint) *guide {
+func newGuide(upperBound int) *guide {
 	return &guide{
 		upperBound: upperBound,
 		boundArray: []pair{},
@@ -32,7 +32,7 @@ func newGuide(upperBound uint) *guide {
 	}
 }
 
-func (guide *guide) forceIncrease(index uint, reduceValue uint) []action {
+func (guide *guide) forceIncrease(index int, reduceValue int) []action {
 	ops := []action{}
 
 	guide.increase(index, nil)
@@ -51,7 +51,7 @@ func (guide *guide) forceIncrease(index uint, reduceValue uint) []action {
 	return ops
 }
 
-func (guide *guide) fixUp(pair *pair, reduceValue uint, ops *[]action) {
+func (guide *guide) fixUp(pair *pair, reduceValue int, ops *[]action) {
 	guide.reduce(pair.snd, reduceValue, ops)
 	guide.increase(pair.snd + 1, nil)
 
@@ -68,14 +68,14 @@ func (guide *guide) fixUp(pair *pair, reduceValue uint, ops *[]action) {
 	}
 }
 
-func (guide *guide) increase(index uint, ops *[]action) {
+func (guide *guide) increase(index int, ops *[]action) {
 	guide.boundArray[index].fst++
 	if ops != nil {
 		*ops = append(*ops, action{index, Increase, 1})
 	}
 }
 
-func (guide *guide) reduce(index uint, value uint, ops *[]action) {
+func (guide *guide) reduce(index int, value int, ops *[]action) {
 	if guide.upperBound == UPPER_BOUND {
 		if ops != nil {
 			*ops = append(*ops, action{index, Reduce, value})
@@ -83,6 +83,10 @@ func (guide *guide) reduce(index uint, value uint, ops *[]action) {
 
 		guide.boundArray[index].fst -= value
 		guide.boundArray[index + 1].fst++
+	} else {
+		if ops != nil {
+			*ops = append(*ops, action{index, Reduce, value})
+		}
 	}
 }
 
