@@ -18,10 +18,18 @@ type node struct {
 	childrenRanks   []uint
 
 	vList           *list.List
-	wlist           *list.List
+	wList           *list.List
 
 	nextInViolating *node
 	prevInViolating *node
+}
+
+func mbySwapNode(ptr1 *node, ptr2 *node, cond bool) {
+	if cond {
+		temp := *ptr1
+		*ptr1 = *ptr2
+		*ptr2 = temp
+	}
 }
 
 func newNode(value float64) *node {
@@ -30,13 +38,17 @@ func newNode(value float64) *node {
 	node.rank = 0
 	node.children = list.New()
 	node.vList = list.New()
-	node.wlist = list.New()
+	node.wList = list.New()
 
 	return node
 }
 
 func (node *node) leftSon() *list.Element {
 	return node.children.Front()
+}
+
+func (node *node) isGood() bool {
+	return node.value > node.parent.value
 }
 
 func getMinNode(xNode *node, yNode *node, zNode *node) (*node, *node, *node) {
@@ -78,7 +90,20 @@ func (parent *node) addChild(child *node) {
 	parent.children.Front().Value.(*node).leftBrother = child
 
 	child.self = parent.children.PushFront(child)
+
 	parent.childrenRanks[child.rank]++
+}
+
+func (node *node) incRank(subNode1 *node, subNode2 *node) {
+
+	if node.rank != subNode1.rank || node.rank != subNode2.rank {
+		panic("Node ranks don't match")
+	}
+
+	node.childrenRanks = append(node.childrenRanks, 0)
+
+	node.addChild(subNode1)
+	node.addChild(subNode2)
 }
 
 func (node *node) link(xNode *node, yNode *node) {
@@ -90,9 +115,15 @@ func (node *node) link(xNode *node, yNode *node) {
 	node.addChild(xNode)
 	node.addChild(yNode)
 	node.rank++
+	node.parent.childrenRanks[node.rank]++
 }
 
 
-func (node *node) delink(nodeArr []*node) *node {
-	return nil
+func (parent *node) delink() *node {
+	child := parent.children.Front().Value.(*node)
+	parent.removeChild(child)
+	if parent.childrenRanks[parent.rank - 1] == 0 {
+		parent.rank = parent.children.Front().Value.(*node).rank + 1
+	}
+	return child
 }

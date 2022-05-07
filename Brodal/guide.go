@@ -86,6 +86,7 @@ func (guide *guide) reduce(index uint, value uint, ops *[]action) {
 	}
 }
 
-func (guide *guide) print() {
-
+func (guide *guide) expand() {
+	guide.blocks = append(guide.blocks, )
+	guide.boundArray = append(guide.boundArray, )
 }
