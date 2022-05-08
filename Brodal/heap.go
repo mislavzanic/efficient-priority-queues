@@ -7,6 +7,14 @@ type BrodalHeap struct {
 	tree2 *tree
 }
 
+type violationSetType byte
+
+const (
+	wSet  violationSetType = 0
+	vSet                   = 1
+	error                  = 2
+)
+
 func newHeap(value float64) *BrodalHeap {
 	return &BrodalHeap{
 		tree1: newTree(value, 1),
@@ -25,12 +33,7 @@ func (bh *BrodalHeap) DecreaseKey(currKey *node, value float64) {
 	} else {
 		currKey.value = value
 		if !currKey.isGood() {
-			if currKey.rank > bh.tree1.root.rank {
-				bh.tree1.root.vList.PushBack(currKey)
-			} else {
-				bh.tree1.root.wList.PushBack(currKey)
-			}
-			// bh.updateViolating()
+			bh.updateViolatingSet(bh.addViolation(currKey))
 			// TODO take care of a violation
 		}
 	}
@@ -93,5 +96,15 @@ func (bh *BrodalHeap) Meld(other *BrodalHeap) {
 		} else {
 			bh.tree2 = nil
 		}
+	}
+}
+
+func (bh *BrodalHeap) addViolation(bad *node) violationSetType {
+	return bh.tree1.addViolation(bad)
+}
+
+func (bh *BrodalHeap) updateViolatingSet(setType violationSetType) {
+	if setType == error {
+		panic("Wrong set type")
 	}
 }

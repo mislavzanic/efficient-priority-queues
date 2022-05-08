@@ -10,7 +10,9 @@ var LOWER_BOUND int = -2
 type tree struct {
 	root *node
 
-	rankPointersW *list.List
+	id uint
+
+	rankPointersW []*node
 	childrenRank  []*node
 
 	upperBoundGuide *guide
@@ -27,6 +29,24 @@ const (
 
 func (tree *tree) rootRank() uint {
 	return tree.root.rank
+}
+
+func (tree *tree) addViolation(bad *node) violationSetType {
+	if tree.id == 1 {
+		if bad.rank > tree.rootRank() {
+			bad.violatingSelf = tree.root.vList.PushFront(bad)
+			return vSet
+		} else {
+			if tree.mainTreeGuideW.boundArray[bad.rank].fst != 0 {
+				bad.violatingSelf = tree.root.wList.InsertBefore(bad, tree.rankPointersW[bad.rank].violatingSelf)
+			} else {
+				bad.violatingSelf = tree.root.wList.PushFront(bad)
+			}
+			return wSet
+		}
+	}
+
+	return error
 }
 
 func (tree *tree) children() *list.List {
@@ -198,7 +218,8 @@ func newTree(value float64, treeIndex uint) *tree {
 
 	tree := &tree{
 		root:            newNode(value),
-		rankPointersW:   list.New(),
+		id:              treeIndex,
+		rankPointersW:   nil,
 		childrenRank:    nil,
 		upperBoundGuide: newGuide(UPPER_BOUND),
 		lowerBoundGuide: newGuide(LOWER_BOUND),
