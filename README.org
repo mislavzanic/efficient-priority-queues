@@ -1,0 +1,6 @@
+#+title: Heaps
+
+This is a repo for source code for my master theses *Efficient implementations of priority queue*.
+PQ implementations here are:
+ 1. Fibonacci heap
+ 2. Brodal heap (described in [[https://www.google.com/url?sa=t&rct=j&q=&esrc=s&source=web&cd=&cad=rja&uact=8&ved=2ahUKEwjSleHHo9D3AhUI16QKHcLqB2UQFnoECAsQAQ&url=https%3A%2F%2Fcs.au.dk%2F~gerth%2Fpapers%2Fsoda96.pdf&usg=AOvVaw33D6m3_qIfJD7dnt8TL46Y][Worst-case Efficient Priority Queues]])

@@ -42,7 +42,18 @@ func (bh *BrodalHeap) Delete(node *node) {
 }
 
 func (bh *BrodalHeap) DeleteMin() {
+	child := bh.tree2.children().Front()
 
+	for bh.tree2.children().Len() != 0 {
+		bh.tree2.removeRootChild(child.Value.(*node))
+		bh.tree1.insert(child.Value.(*node), true)
+		child = bh.tree2.children().Front()
+	}
+
+	bh.tree1.insert(bh.tree2.root, true)
+	bh.tree2 = nil
+
+	newMin := bh.tree1.childrenRank[bh.tree1.rootRank()]
 }
 
 func (bh *BrodalHeap) Insert(value float64) {
@@ -66,7 +77,7 @@ func (bh *BrodalHeap) Meld(other *BrodalHeap) {
 			if tree != minTree && tree != maxTree {
 
 				if maxTree.root.rank == tree.root.rank && maxTree != minTree {
-					nodes := maxTree.delink()
+					nodes, _ := tree.delinkFromRoot()
 					for _, n := range nodes {
 						maxTree.insert(n, maxTree == minTree)
 					}

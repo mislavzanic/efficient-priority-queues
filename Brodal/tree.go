@@ -24,8 +24,12 @@ const (
 	cutReduce             = 1
 )
 
-func (tree *tree) rank() uint {
+func (tree *tree) rootRank() uint {
 	return tree.root.rank
+}
+
+func (tree *tree) children() *list.List {
+	return tree.root.children
 }
 
 func (tree *tree) addRootChild(child *node) {
@@ -40,6 +44,10 @@ func (tree *tree) removeRootChild(child *node) {
 	if child.rank < tree.root.rank - 2 {
 		tree.upperBoundGuide.update(int(tree.root.numOfChildren[child.rank]), child.rank)
 	}
+}
+
+func (tree *tree) delinkFromRoot() ([]*node, uint) {
+	return tree.root.delink()
 }
 
 func (tree *tree) insert(node *node, isMinTree bool) {
