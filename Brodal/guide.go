@@ -1,8 +1,8 @@
 package Brodal
 
 type pair struct {
-	fst int
-	snd int
+	fst int // value
+	snd int // index
 }
 
 type guide struct {
@@ -32,19 +32,21 @@ func newGuide(upperBound int) *guide {
 	}
 }
 
-func (guide *guide) forceIncrease(index int, reduceValue int) []action {
+func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) []action {
 	ops := []action{}
 
-	guide.increase(index, nil)
+	if actualValue > guide.upperBound - 2 {
+		guide.increase(index, nil)
 
-	if guide.boundArray[index].fst == guide.upperBound - 1 && (*guide.blocks[index]) != nil {
-		guide.fixUp(*guide.blocks[index], reduceValue, &ops)
-	} else if guide.boundArray[index].fst == guide.upperBound {
-		if (*guide.blocks[index]) != nil {
-			guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
-		} else {
+		if guide.boundArray[index].fst == guide.upperBound - 1 && (*guide.blocks[index]) != nil {
 			guide.fixUp(*guide.blocks[index], reduceValue, &ops)
-			guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
+		} else if guide.boundArray[index].fst == guide.upperBound {
+			if (*guide.blocks[index]) != nil {
+				guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
+			} else {
+				guide.fixUp(*guide.blocks[index], reduceValue, &ops)
+				guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
+			}
 		}
 	}
 
@@ -76,21 +78,23 @@ func (guide *guide) increase(index int, ops *[]action) {
 }
 
 func (guide *guide) reduce(index int, value int, ops *[]action) {
-	if guide.upperBound == UPPER_BOUND {
-		if ops != nil {
-			*ops = append(*ops, action{index, Reduce, value})
-		}
+	if ops != nil {
+		*ops = append(*ops, action{index, Reduce, value})
+	}
 
+	if guide.upperBound == UPPER_BOUND || guide.upperBound == LOWER_BOUND {
 		guide.boundArray[index].fst -= value
 		guide.boundArray[index + 1].fst++
-	} else {
-		if ops != nil {
-			*ops = append(*ops, action{index, Reduce, value})
-		}
 	}
 }
 
 func (guide *guide) expand() {
 	guide.blocks = append(guide.blocks, )
 	guide.boundArray = append(guide.boundArray, )
+}
+
+func (guide *guide) update(value int, rank uint) {
+	if value >= guide.upperBound - 2 {
+		guide.boundArray[rank].fst = value
+	}
 }
