@@ -74,17 +74,19 @@ func getMinNode(xNode *node, yNode *node, zNode *node) (*node, *node, *node) {
 	return minNode, xNode, yNode
 }
 
-func (parent *node) removeChild(child *node) {
+func (parent *node) removeChild(child *node) uint {
 	parent.children.Remove(child.self)
 	parent.numOfChildren[child.rank]--
 	parent.mbyUpdateRank()
+
+	return parent.numOfChildren[child.rank]
 }
 
 
-func (parent *node) removeFirstChild() *node {
+func (parent *node) removeFirstChild() (*node, uint) {
 	child := parent.children.Front().Value.(*node)
-	parent.removeChild(child)
-	return child
+	numOfChildren := parent.removeChild(child)
+	return child, numOfChildren
 }
 
 func (parent *node) addChild(child *node, newRightBrother *node) {
@@ -134,14 +136,14 @@ func (node *node) link(xNode *node, yNode *node) {
 	node.parent.numOfChildren[node.rank]++
 }
 
-func (parent *node) delink() []*node {
-	node1 := parent.removeFirstChild()
-	node2 := parent.removeFirstChild()
+func (parent *node) delink() ([]*node, uint) {
+	node1, _ := parent.removeFirstChild()
+	node2, n := parent.removeFirstChild()
 	if parent.numOfChildren[parent.rank - 1] == 1 {
-		node3 := parent.removeFirstChild()
-		return []*node{node1, node2, node3}
+		node3, n := parent.removeFirstChild()
+		return []*node{node1, node2, node3}, n
 	}
-	return []*node{node1, node2}
+	return []*node{node1, node2}, n
 }
 
 func (this *node) removeSelfFromViolating() {

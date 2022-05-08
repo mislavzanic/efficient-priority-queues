@@ -28,23 +28,34 @@ func (tree *tree) rank() uint {
 	return tree.root.rank
 }
 
-func (tree *tree) insert(node *node, isMinTree bool) {
-	if node.rank < tree.root.rank - 2 {
+func (tree *tree) addRootChild(child *node) {
+	tree.root.addChild(child , tree.childrenRank[child.rank])
+	if child.rank < tree.root.rank - 2 {
+		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[child.rank]), child.rank)
+	}
+}
 
-		tree.root.addChild(node, tree.childrenRank[node.rank])
+func (tree *tree) removeRootChild(child *node) {
+	tree.root.removeChild(child)
+	if child.rank < tree.root.rank - 2 {
+		tree.upperBoundGuide.update(int(tree.root.numOfChildren[child.rank]), child.rank)
+	}
+}
+
+func (tree *tree) insert(node *node, isMinTree bool) {
+	tree.addRootChild(node)
+
+	if node.rank < tree.root.rank - 2 {
 		actions := tree.upperBoundGuide.forceIncrease(int(node.rank), int(tree.root.numOfChildren[node.rank]), 3)
-		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[node.rank]), node.rank)
 
 		for _, act := range actions {
-			tree.performeAction(node, act, linkReduce)
+			tree.performeAction(node, act, linkReduce, isMinTree)
 		}
 
-		tree.handleHighRank(tree.root.rank - 2, isMinTree)
-		tree.handleHighRank(tree.root.rank - 1, isMinTree)
-	} else {
-		tree.root.addChild(node, tree.root.leftSon())
-		tree.handleHighRank(node.rank, isMinTree)
 	}
+
+	tree.handleHighRank(tree.root.rank - 2, isMinTree)
+	tree.handleHighRank(tree.root.rank - 1, isMinTree)
 
 	if !isMinTree {
 		// TODO
@@ -52,28 +63,27 @@ func (tree *tree) insert(node *node, isMinTree bool) {
 }
 
 func (tree *tree) cut(node *node, isMinTree bool) {
-	if node.rank < tree.root.rank - 2 {
-		tree.root.removeChild(node)
+	tree.removeRootChild(node)
 
+	if node.rank < tree.root.rank - 2 {
 		if tree.childrenRank[node.rank].leftBrother().rank < node.rank + 1 {
 			panic("Don't know what to do")
 		}
+
 		reduceVal := 2
 		if tree.childrenRank[node.rank].leftBrother().numOfChildren[node.rank] == 3 {
 			reduceVal = 3
 		}
-		actions := tree.lowerBoundGuide.forceIncrease(int(node.rank), int(tree.root.numOfChildren[node.rank]), int(reduceVal))
-		tree.upperBoundGuide.update(int(tree.root.numOfChildren[node.rank]), node.rank)
 
+		actions := tree.lowerBoundGuide.forceIncrease(int(node.rank), int(tree.root.numOfChildren[node.rank]), int(reduceVal))
 		for _, act := range actions {
-			tree.performeAction(node, act, cutReduce)
+			tree.performeAction(node, act, cutReduce, isMinTree)
 		}
 
-		tree.handleHighRank(tree.root.rank - 2, isMinTree)
-		tree.handleHighRank(tree.root.rank - 1, isMinTree)
-	} else {
-		tree.root.removeChild(node)
 	}
+
+	tree.handleHighRank(tree.root.rank - 2, isMinTree)
+	tree.handleHighRank(tree.root.rank - 1, isMinTree)
 }
 
 func (tree *tree) incRank(node1 *node, node2 *node) {
@@ -85,17 +95,23 @@ func (tree *tree) incRank(node1 *node, node2 *node) {
 	tree.childrenRank = append(tree.childrenRank, node2)
 }
 
-func (tree *tree) performeAction(node *node, action action, reduceType reduceType) {
+func (tree *tree) performeAction(node *node, action action, reduceType reduceType, isMinTree bool) {
 	if reduceType == linkReduce {
 		tree.link(uint(action.index))
 
 		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index]), uint(action.index))
 		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index + 1]), uint(action.index + 1))
 	} else {
-		tree.childrenRank[action.index].delink()
 
-		// tree.delink(action.index)
+		removedTree := tree.childrenRank[action.index]
+		tree.removeRootChild(removedTree)
 
+		nodes, _ := removedTree.delink()
+		for _, n := range nodes {
+			tree.insert(n, isMinTree)
+		}
+
+		tree.insert(removedTree, isMinTree)
 	}
 }
 
@@ -116,9 +132,9 @@ func (tree *tree) link(rank uint) {
 
 func (tree *tree) handleHighRank(rank uint, isMinTree bool) {
 	if tree.root.numOfChildren[rank] > 7 {
-		nodeSliceX := tree.root.delink()
-		nodeSliceY := tree.root.delink()
-		nodeSliceZ := tree.root.delink()
+		nodeSliceX, _ := tree.root.delink()
+		nodeSliceY, _ := tree.root.delink()
+		nodeSliceZ, _ := tree.root.delink()
 
 		nodeSliceX[0].incRank(nodeSliceX[1], nodeSliceY[0])
 		nodeSliceY[1].incRank(nodeSliceZ[0], nodeSliceZ[1])
@@ -129,6 +145,8 @@ func (tree *tree) handleHighRank(rank uint, isMinTree bool) {
 			tree.insert(nodeSliceX[0], isMinTree)
 			tree.insert(nodeSliceY[1], isMinTree)
 		}
+	} else if tree.root.numOfChildren[rank] < 2 {
+		//...
 	}
 }
 
