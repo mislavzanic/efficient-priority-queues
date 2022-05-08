@@ -5,19 +5,19 @@ import (
 )
 
 type node struct {
-    value           float64
-	rank            uint
+	value float64
+	rank  uint
 
-	self            *list.Element
-	violatingSelf   *list.Element
+	self          *list.Element
+	violatingSelf *list.Element
 
-	parent          *node
+	parent *node
 
-	children        *list.List
-	numOfChildren   []uint
+	children      *list.List
+	numOfChildren []uint
 
-	vList           *list.List
-	wList           *list.List
+	vList *list.List
+	wList *list.List
 
 	parentViolatingList *list.List
 }
@@ -82,7 +82,6 @@ func (parent *node) removeChild(child *node) uint {
 	return parent.numOfChildren[child.rank]
 }
 
-
 func (parent *node) removeFirstChild() (*node, uint) {
 	child := parent.children.Front().Value.(*node)
 	numOfChildren := parent.removeChild(child)
@@ -103,7 +102,13 @@ func (parent *node) addChild(child *node, newRightBrother *node) {
 }
 
 func (this *node) swapBrothers(other *node) {
-	brother := func () *node { if other.leftBrother().rank == other.rank { return other.leftBrother() } else { return other.rightBrother() }}()
+	brother := func() *node {
+		if other.leftBrother().rank == other.rank {
+			return other.leftBrother()
+		} else {
+			return other.rightBrother()
+		}
+	}()
 	this.parent.addChild(brother, this)
 	other.parent.addChild(this, other)
 }
@@ -126,7 +131,7 @@ func (node *node) incRank(subNode1 *node, subNode2 *node) {
 
 func (node *node) link(xNode *node, yNode *node) {
 
-	if xNode.rank + 1 != node.rank || yNode.rank + 1 != node.rank {
+	if xNode.rank+1 != node.rank || yNode.rank+1 != node.rank {
 		panic("Only allowed to link nodes of rank r(x) - 1")
 	}
 
@@ -139,7 +144,7 @@ func (node *node) link(xNode *node, yNode *node) {
 func (parent *node) delink() ([]*node, uint) {
 	node1, _ := parent.removeFirstChild()
 	node2, n := parent.removeFirstChild()
-	if parent.numOfChildren[parent.rank - 1] == 1 {
+	if parent.numOfChildren[parent.rank-1] == 1 {
 		node3, n := parent.removeFirstChild()
 		return []*node{node1, node2, node3}, n
 	}

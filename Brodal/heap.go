@@ -3,8 +3,8 @@ package Brodal
 import "math"
 
 type BrodalHeap struct {
-    tree1 *tree
-    tree2 *tree
+	tree1 *tree
+	tree2 *tree
 }
 
 func newHeap(value float64) *BrodalHeap {

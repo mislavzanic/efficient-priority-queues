@@ -8,7 +8,7 @@ var UPPER_BOUND int = 7
 var LOWER_BOUND int = -2
 
 type tree struct {
-	root          *node
+	root *node
 
 	rankPointersW *list.List
 	childrenRank  []*node
@@ -19,6 +19,7 @@ type tree struct {
 }
 
 type reduceType byte
+
 const (
 	linkReduce reduceType = 0
 	cutReduce             = 1
@@ -33,15 +34,15 @@ func (tree *tree) children() *list.List {
 }
 
 func (tree *tree) addRootChild(child *node) {
-	tree.root.addChild(child , tree.childrenRank[child.rank])
-	if child.rank < tree.root.rank - 2 {
+	tree.root.addChild(child, tree.childrenRank[child.rank])
+	if child.rank < tree.root.rank-2 {
 		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[child.rank]), child.rank)
 	}
 }
 
 func (tree *tree) removeRootChild(child *node) {
 	tree.root.removeChild(child)
-	if child.rank < tree.root.rank - 2 {
+	if child.rank < tree.root.rank-2 {
 		tree.upperBoundGuide.update(int(tree.root.numOfChildren[child.rank]), child.rank)
 	}
 }
@@ -53,7 +54,7 @@ func (tree *tree) delinkFromRoot() ([]*node, uint) {
 func (tree *tree) insert(node *node, isMinTree bool) {
 	tree.addRootChild(node)
 
-	if node.rank < tree.root.rank - 2 {
+	if node.rank < tree.root.rank-2 {
 		actions := tree.upperBoundGuide.forceIncrease(int(node.rank), int(tree.root.numOfChildren[node.rank]), 3)
 
 		for _, act := range actions {
@@ -62,8 +63,8 @@ func (tree *tree) insert(node *node, isMinTree bool) {
 
 	}
 
-	tree.handleHighRank(tree.root.rank - 2, isMinTree)
-	tree.handleHighRank(tree.root.rank - 1, isMinTree)
+	tree.handleHighRank(tree.root.rank-2, isMinTree)
+	tree.handleHighRank(tree.root.rank-1, isMinTree)
 
 	if !isMinTree {
 		// TODO
@@ -73,8 +74,8 @@ func (tree *tree) insert(node *node, isMinTree bool) {
 func (tree *tree) cut(node *node, isMinTree bool) {
 	tree.removeRootChild(node)
 
-	if node.rank < tree.root.rank - 2 {
-		if tree.childrenRank[node.rank].leftBrother().rank < node.rank + 1 {
+	if node.rank < tree.root.rank-2 {
+		if tree.childrenRank[node.rank].leftBrother().rank < node.rank+1 {
 			panic("Don't know what to do")
 		}
 
@@ -90,12 +91,12 @@ func (tree *tree) cut(node *node, isMinTree bool) {
 
 	}
 
-	tree.handleHighRank(tree.root.rank - 2, isMinTree)
-	tree.handleHighRank(tree.root.rank - 1, isMinTree)
+	tree.handleHighRank(tree.root.rank-2, isMinTree)
+	tree.handleHighRank(tree.root.rank-1, isMinTree)
 }
 
 func (tree *tree) incRank(node1 *node, node2 *node) {
-	if tree.rank() > node1.rank || tree.rank() > node2.rank {
+	if tree.rootRank() > node1.rank || tree.rootRank() > node2.rank {
 		panic("Tree ranks don't match")
 	}
 
@@ -108,7 +109,7 @@ func (tree *tree) performeAction(node *node, action action, reduceType reduceTyp
 		tree.link(uint(action.index))
 
 		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index]), uint(action.index))
-		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index + 1]), uint(action.index + 1))
+		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index+1]), uint(action.index+1))
 	} else {
 
 		removedTree := tree.childrenRank[action.index]
@@ -147,7 +148,7 @@ func (tree *tree) handleHighRank(rank uint, isMinTree bool) {
 		nodeSliceX[0].incRank(nodeSliceX[1], nodeSliceY[0])
 		nodeSliceY[1].incRank(nodeSliceZ[0], nodeSliceZ[1])
 
-		if rank == tree.root.rank - 1 {
+		if rank == tree.root.rank-1 {
 			tree.incRank(nodeSliceX[0], nodeSliceY[0])
 		} else {
 			tree.insert(nodeSliceX[0], isMinTree)
@@ -176,7 +177,7 @@ func (tree *tree) reduceViolaton(x1 *node, x2 *node) {
 		}
 
 		if x1.parent.numOfChildren[x1.rank] == 2 {
-			if x1.parent.rank == x1.rank + 1 {
+			if x1.parent.rank == x1.rank+1 {
 				//... TODO -- after tree.cut() is finished
 			} else {
 				x1.parent.removeChild(x1)
@@ -196,12 +197,12 @@ func (tree *tree) reduceViolaton(x1 *node, x2 *node) {
 func newTree(value float64, treeIndex uint) *tree {
 
 	tree := &tree{
-		root: newNode(value),
-		rankPointersW: list.New(),
-		childrenRank: nil,
+		root:            newNode(value),
+		rankPointersW:   list.New(),
+		childrenRank:    nil,
 		upperBoundGuide: newGuide(UPPER_BOUND),
 		lowerBoundGuide: newGuide(LOWER_BOUND),
-		mainTreeGuideW: nil,
+		mainTreeGuideW:  nil,
 	}
 
 	if treeIndex == 1 {
