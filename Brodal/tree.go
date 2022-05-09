@@ -4,9 +4,6 @@ import (
 	"container/list"
 )
 
-var UPPER_BOUND int = 7
-var LOWER_BOUND int = -2
-
 type tree struct {
 	root *node
 
@@ -14,6 +11,8 @@ type tree struct {
 
 	rankPointersW []*node
 	childrenRank  []*node
+
+	numOfNodesInW []uint
 
 	upperBoundGuide *guide
 	lowerBoundGuide *guide
@@ -27,6 +26,9 @@ const (
 	cutReduce             = 1
 )
 
+const UPPER_BOUND int = 7
+const LOWER_BOUND int = -2
+
 func (tree *tree) rootRank() uint {
 	return tree.root.rank
 }
@@ -38,10 +40,13 @@ func (tree *tree) addViolation(bad *node) violationSetType {
 			return vSet
 		} else {
 			if tree.mainTreeGuideW.boundArray[bad.rank].fst != 0 {
-				bad.violatingSelf = tree.root.wList.InsertBefore(bad, tree.rankPointersW[bad.rank].violatingSelf)
+				bad.violatingSelf = tree.root.wList.InsertAfter(bad, tree.rankPointersW[bad.rank].violatingSelf)
 			} else {
 				bad.violatingSelf = tree.root.wList.PushFront(bad)
+				tree.rankPointersW[bad.rank] = bad
 			}
+
+			tree.numOfNodesInW[bad.rank]++
 			return wSet
 		}
 	}
@@ -60,6 +65,15 @@ func (tree *tree) addRootChild(child *node) {
 	}
 }
 
+func (tree *tree) RemoveNode(child *node) {
+	if child.parent == tree.root {
+		tree.cut(child)
+	} else {
+		child.parent.removeChild(child)
+	}
+
+}
+
 func (tree *tree) removeRootChild(child *node) {
 	tree.root.removeChild(child)
 	if child.rank < tree.root.rank-2 {
@@ -71,27 +85,27 @@ func (tree *tree) delinkFromRoot() ([]*node, uint) {
 	return tree.root.delink()
 }
 
-func (tree *tree) insert(node *node, isMinTree bool) {
+func (tree *tree) Insert(node *node) {
 	tree.addRootChild(node)
 
 	if node.rank < tree.root.rank-2 {
 		actions := tree.upperBoundGuide.forceIncrease(int(node.rank), int(tree.root.numOfChildren[node.rank]), 3)
 
 		for _, act := range actions {
-			tree.performeAction(node, act, linkReduce, isMinTree)
+			tree.performeAction(node, act, linkReduce)
 		}
 
 	}
 
-	tree.handleHighRank(tree.root.rank-2, isMinTree)
-	tree.handleHighRank(tree.root.rank-1, isMinTree)
+	tree.handleHighRank(tree.root.rank-2)
+	tree.handleHighRank(tree.root.rank-1)
 
-	if !isMinTree {
+	if tree.id == 2{
 		// TODO
 	}
 }
 
-func (tree *tree) cut(node *node, isMinTree bool) {
+func (tree *tree) cut(node *node) {
 	tree.removeRootChild(node)
 
 	if node.rank < tree.root.rank-2 {
@@ -106,13 +120,13 @@ func (tree *tree) cut(node *node, isMinTree bool) {
 
 		actions := tree.lowerBoundGuide.forceIncrease(int(node.rank), int(tree.root.numOfChildren[node.rank]), int(reduceVal))
 		for _, act := range actions {
-			tree.performeAction(node, act, cutReduce, isMinTree)
+			tree.performeAction(node, act, cutReduce)
 		}
 
 	}
 
-	tree.handleHighRank(tree.root.rank-2, isMinTree)
-	tree.handleHighRank(tree.root.rank-1, isMinTree)
+	tree.handleHighRank(tree.root.rank-2)
+	tree.handleHighRank(tree.root.rank-1)
 }
 
 func (tree *tree) incRank(node1 *node, node2 *node) {
@@ -122,9 +136,11 @@ func (tree *tree) incRank(node1 *node, node2 *node) {
 
 	tree.root.incRank(node1, node2)
 	tree.childrenRank = append(tree.childrenRank, node2)
+	tree.rankPointersW = append(tree.rankPointersW, nil)
+	tree.numOfNodesInW = append(tree.numOfNodesInW, 0)
 }
 
-func (tree *tree) performeAction(node *node, action action, reduceType reduceType, isMinTree bool) {
+func (tree *tree) performeAction(node *node, action action, reduceType reduceType) {
 	if reduceType == linkReduce {
 		tree.link(uint(action.index))
 
@@ -137,10 +153,10 @@ func (tree *tree) performeAction(node *node, action action, reduceType reduceTyp
 
 		nodes, _ := removedTree.delink()
 		for _, n := range nodes {
-			tree.insert(n, isMinTree)
+			tree.insert(n)
 		}
 
-		tree.insert(removedTree, isMinTree)
+		tree.insert(removedTree)
 	}
 }
 
@@ -159,7 +175,7 @@ func (tree *tree) link(rank uint) {
 	minNode.link(nodeX, nodeY)
 }
 
-func (tree *tree) handleHighRank(rank uint, isMinTree bool) {
+func (tree *tree) handleHighRank(rank uint) {
 	if tree.root.numOfChildren[rank] > 7 {
 		nodeSliceX, _ := tree.root.delink()
 		nodeSliceY, _ := tree.root.delink()
@@ -171,8 +187,8 @@ func (tree *tree) handleHighRank(rank uint, isMinTree bool) {
 		if rank == tree.root.rank-1 {
 			tree.incRank(nodeSliceX[0], nodeSliceY[0])
 		} else {
-			tree.insert(nodeSliceX[0], isMinTree)
-			tree.insert(nodeSliceY[1], isMinTree)
+			tree.insert(nodeSliceX[0])
+			tree.insert(nodeSliceY[1])
 		}
 	} else if tree.root.numOfChildren[rank] < 2 {
 		//...
@@ -183,9 +199,11 @@ func (tree *tree) reduceViolaton(x1 *node, x2 *node) {
 	if x1.isGood() || x2.isGood() {
 		if x1.isGood() {
 			x1.removeSelfFromViolating()
+			tree.numOfNodesInW[x1.rank]--
 		}
 		if x2.isGood() {
 			x2.removeSelfFromViolating()
+			tree.numOfNodesInW[x2.rank]--
 		}
 	} else {
 		if x1.parent != x2.parent {
@@ -202,12 +220,12 @@ func (tree *tree) reduceViolaton(x1 *node, x2 *node) {
 			} else {
 				x1.parent.removeChild(x1)
 				x1.parent.removeChild(x2)
-				tree.insert(x1, true)
-				tree.insert(x2, true)
+				tree.insert(x1)
+				tree.insert(x2)
 			}
 		} else {
 			x1.parent.removeChild(x1)
-			tree.insert(x1, true)
+			tree.insert(x1)
 		}
 	}
 }
@@ -219,8 +237,9 @@ func newTree(value float64, treeIndex uint) *tree {
 	tree := &tree{
 		root:            newNode(value),
 		id:              treeIndex,
-		rankPointersW:   nil,
-		childrenRank:    nil,
+		rankPointersW:   []*node{},
+		childrenRank:    []*node{},
+		numOfNodesInW:   []uint{},
 		upperBoundGuide: newGuide(UPPER_BOUND),
 		lowerBoundGuide: newGuide(LOWER_BOUND),
 		mainTreeGuideW:  nil,
