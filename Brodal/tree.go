@@ -58,10 +58,24 @@ func (tree *tree) children() *list.List {
 	return tree.root.children
 }
 
+
 func (tree *tree) addRootChild(child *node) {
 	tree.root.addChild(child, tree.childrenRank[child.rank])
 	if child.rank < tree.root.rank-2 {
-		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[child.rank]), child.rank)
+		// tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[child.rank]), child.rank)
+	}
+}
+
+func (tree *tree) addChildTo(parent *node, newChild *node, rightBrother *node) {
+	if parent == tree.root {
+		tree.Insert(newChild)
+	} else {
+		parent.addChild(newChild, rightBrother)
+		if newChild.value < parent.value {
+			if tree.id == 1 && newChild.rank < tree.rootRank() {
+				tree.addViolation(newChild)
+			}
+		}
 	}
 }
 
@@ -71,13 +85,12 @@ func (tree *tree) RemoveNode(child *node) {
 	} else {
 		child.parent.removeChild(child)
 	}
-
 }
 
 func (tree *tree) removeRootChild(child *node) {
 	tree.root.removeChild(child)
 	if child.rank < tree.root.rank-2 {
-		tree.upperBoundGuide.update(int(tree.root.numOfChildren[child.rank]), child.rank)
+		// tree.upperBoundGuide.update(int(tree.root.numOfChildren[child.rank]), child.rank)
 	}
 }
 
@@ -144,8 +157,8 @@ func (tree *tree) performeAction(node *node, action action, reduceType reduceTyp
 	if reduceType == linkReduce {
 		tree.link(uint(action.index))
 
-		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index]), uint(action.index))
-		tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index+1]), uint(action.index+1))
+		// tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index]), uint(action.index))
+		// tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index+1]), uint(action.index+1))
 	} else {
 
 		removedTree := tree.childrenRank[action.index]
@@ -153,10 +166,10 @@ func (tree *tree) performeAction(node *node, action action, reduceType reduceTyp
 
 		nodes, _ := removedTree.delink()
 		for _, n := range nodes {
-			tree.insert(n)
+			tree.Insert(n)
 		}
 
-		tree.insert(removedTree)
+		tree.Insert(removedTree)
 	}
 }
 
@@ -187,8 +200,8 @@ func (tree *tree) handleHighRank(rank uint) {
 		if rank == tree.root.rank-1 {
 			tree.incRank(nodeSliceX[0], nodeSliceY[0])
 		} else {
-			tree.insert(nodeSliceX[0])
-			tree.insert(nodeSliceY[1])
+			tree.Insert(nodeSliceX[0])
+			tree.Insert(nodeSliceY[1])
 		}
 	} else if tree.root.numOfChildren[rank] < 2 {
 		//...
@@ -216,16 +229,29 @@ func (tree *tree) reduceViolaton(x1 *node, x2 *node) {
 
 		if x1.parent.numOfChildren[x1.rank] == 2 {
 			if x1.parent.rank == x1.rank+1 {
-				//... TODO -- after tree.cut() is finished
+				if x1.parent != tree.root {
+					replacement := tree.childrenRank[x1.parent.rank]
+					tree.cut(replacement)
+					tree.addChildTo(x1.parent.parent, replacement, x1.parent)
+
+					x1.parent.parent.removeChild(x1.parent)
+				} else {
+					tree.cut(x1.parent)
+				}
+
+				x1.parent.removeChild(x1)
+				x1.parent.removeChild(x2)
+
+				tree.Insert(x1.parent)
 			} else {
 				x1.parent.removeChild(x1)
 				x1.parent.removeChild(x2)
-				tree.insert(x1)
-				tree.insert(x2)
 			}
+			tree.Insert(x1)
+			tree.Insert(x2)
 		} else {
 			x1.parent.removeChild(x1)
-			tree.insert(x1)
+			tree.Insert(x1)
 		}
 	}
 }
@@ -293,4 +319,32 @@ func mbySwapTree(ptr1 *tree, ptr2 *tree, cond bool) (*tree, *tree) {
 		ptr2 = temp
 	}
 	return ptr1, ptr2
+}
+
+func (tree *tree) removeViolatingNode(rmNode *node) {
+	if tree.id == 1 {
+		parent := rmNode.parent
+		if parent.numOfChildren[rmNode.rank] == 2 {
+			replacement := tree.childrenRank[parent.rank]
+			grandParent := parent.parent
+
+			otherBrother := func () *node {
+				if rmNode.leftBrother().rank != rmNode.rank {
+					return rmNode.rightBrother()
+				} else {
+					return rmNode.leftBrother()
+				}
+			}()
+
+			parent.removeChild(rmNode)
+			parent.removeChild(otherBrother)
+			otherBrother.removeSelfFromViolating()
+			tree.Insert(otherBrother)
+			tree.cut(replacement)
+			grandParent.addChild(replacement, parent)
+			grandParent.removeChild(parent)
+		} else {
+			parent.removeChild(rmNode)
+		}
+	}
 }

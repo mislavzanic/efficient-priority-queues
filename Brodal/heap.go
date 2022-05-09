@@ -111,9 +111,7 @@ func (bh *BrodalHeap) updateViolatingSet(setType violationSetType, node *node) {
 	}
 
 	if setType == wSet {
-		if bh.tree1.numOfNodesInW[node.rank] == 6 {
-			bh.updateWSet(node)
-		}
+		bh.updateWSet(node)
 	} else {
 
 	}
@@ -121,37 +119,38 @@ func (bh *BrodalHeap) updateViolatingSet(setType violationSetType, node *node) {
 
 func (bh *BrodalHeap) updateWSet(bad *node) {
 
+	actions := bh.tree1.mainTreeGuideW.forceIncrease(int(bad.rank), int(bh.tree1.numOfNodesInW[bad.rank]), 2)
+
+	for _, action := range actions {
+		bh.performeAction(action)
+	}
+}
+
+// big TODO
+func (bh *BrodalHeap) performeAction(act action) {
 	numOfSonsOfT2 := 0
-	for e := bh.tree1.rankPointersW[bad.rank].violatingSelf; e.Value.(*node).rank != bad.rank; e = e.Next() {
+	notSonsOfT2 := []*node{}
+
+	for e := bh.tree1.rankPointersW[act.index].violatingSelf; e.Value.(*node).rank != uint(act.index); e = e.Next() {
 		if e.Value.(*node).parent == bh.tree2.root {
 			numOfSonsOfT2++
+		} else {
+			notSonsOfT2 = append(notSonsOfT2, e.Value.(*node))
 		}
 	}
 
 	if numOfSonsOfT2 > 4 {
 		numOfRemoved := 0
-		for e := bh.tree1.rankPointersW[bad.rank].violatingSelf; e.Value.(*node).rank != bad.rank && numOfRemoved < 2; {
-			if e.Value.(*node).parent != bh.tree2.root {
+		for _, rmNode := range notSonsOfT2 {
 
-				if e == bh.tree1.rankPointersW[bad.rank].violatingSelf {
-					bh.tree1.rankPointersW[bad.rank] = e.Next().Value.(*node)
-				}
-
-				remove := e.Value.(*node)
-				remove.parent.removeChild(remove)
-
-
-				remove.removeSelfFromViolating()
-				bh.tree1.Insert(remove)
-				numOfRemoved++
-			} else {
-				e = e.Next()
-			}
+			bh.tree1.removeViolatingNode(rmNode)
+			rmNode.removeSelfFromViolating()
+			bh.tree1.Insert(rmNode)
+			numOfRemoved++
 		}
 
-
-		for e := bh.tree1.rankPointersW[bad.rank].violatingSelf; e.Value.(*node).rank != bad.rank && numOfRemoved < 2; {
-			bh.tree1.rankPointersW[bad.rank] = e.Next().Value.(*node)
+		for e := bh.tree1.rankPointersW[act.index].violatingSelf; e.Value.(*node).rank != uint(act.index) && numOfRemoved < 2; {
+			bh.tree1.rankPointersW[act.index] = e.Next().Value.(*node)
 
 			e.Value.(*node).removeSelfFromViolating()
 			bh.tree2.cut(e.Value.(*node))
@@ -160,9 +159,23 @@ func (bh *BrodalHeap) updateWSet(bad *node) {
 			numOfRemoved++
 		}
 
-		bh.tree1.numOfNodesInW[bad.rank] -= uint(numOfRemoved)
+		bh.tree1.numOfNodesInW[act.index] -= uint(numOfRemoved)
 
 	} else {
-		actions := bh.tree1.mainTreeGuideW.forceIncrease(bad.rank, 6)
+		// tree reduce violations
+		bh.tree1.reduceViolaton(notSonsOfT2[0], notSonsOfT2[1])
+
+		notGood := func () *node {
+			if !notSonsOfT2[0].isGood() {
+				return notSonsOfT2[0]
+			} else if !notSonsOfT2[1].isGood() {
+				return notSonsOfT2[1]
+			} else { return nil }
+		}()
+
+		if  notGood != nil {
+			bh.tree1.removeViolatingNode(notGood)
+		}
+
 	}
 }

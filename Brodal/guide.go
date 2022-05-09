@@ -35,7 +35,7 @@ func newGuide(upperBound int) *guide {
 func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) []action {
 	ops := []action{}
 
-	if actualValue > guide.upperBound-2 {
+	if actualValue > guide.boundArray[index].fst {
 		guide.increase(index, nil)
 
 		if guide.boundArray[index].fst == guide.upperBound-1 && (*guide.blocks[index]) != nil {
@@ -77,21 +77,23 @@ func (guide *guide) increase(index int, ops *[]action) {
 	}
 }
 
-func (guide *guide) reduce(index int, value int, ops *[]action) {
+func (guide *guide) reduce(index int, reduceValue int, ops *[]action) {
 	if ops != nil {
-		*ops = append(*ops, action{index, Reduce, value})
+		*ops = append(*ops, action{index, Reduce, reduceValue})
 	}
 
-	if guide.upperBound == UPPER_BOUND || guide.upperBound == LOWER_BOUND {
-		guide.boundArray[index].fst -= value
-		guide.boundArray[index+1].fst++
+	if guide.boundArray[index].fst != guide.upperBound {
+		panic("Ipak je moguce... ja sam u guide")
 	}
+
+	guide.boundArray[index].fst -= reduceValue
+	guide.boundArray[index+1].fst++
 }
 
-func (guide *guide) expand() {
-	guide.blocks = append(guide.blocks)
-	guide.boundArray = append(guide.boundArray)
-}
+// func (guide *guide) expand() {
+// 	guide.blocks = append(guide.blocks)
+// 	guide.boundArray = append(guide.boundArray)
+// }
 
 func (guide *guide) update(value int, rank uint) {
 	if value >= guide.upperBound-2 {
