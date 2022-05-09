@@ -9,14 +9,14 @@ type tree struct {
 
 	id uint
 
-	rankPointersW []*node
+	// rankPointersW []*node
 	childrenRank  []*node
 
-	numOfNodesInW []uint
+	// numOfNodesInW []uint
 
 	upperBoundGuide *guide
 	lowerBoundGuide *guide
-	mainTreeGuideW  *guide
+	// mainTreeGuideW  *guide
 }
 
 type reduceType byte
@@ -29,30 +29,30 @@ const (
 const UPPER_BOUND int = 7
 const LOWER_BOUND int = -2
 
-func (tree *tree) rootRank() uint {
+func (tree *tree) RootRank() uint {
 	return tree.root.rank
 }
 
-func (tree *tree) addViolation(bad *node) violationSetType {
-	if tree.id == 1 {
-		if bad.rank > tree.rootRank() {
-			bad.violatingSelf = tree.root.vList.PushFront(bad)
-			return vSet
-		} else {
-			if tree.mainTreeGuideW.boundArray[bad.rank].fst != 0 {
-				bad.violatingSelf = tree.root.wList.InsertAfter(bad, tree.rankPointersW[bad.rank].violatingSelf)
-			} else {
-				bad.violatingSelf = tree.root.wList.PushFront(bad)
-				tree.rankPointersW[bad.rank] = bad
-			}
+// func (tree *tree) addViolation(bad *node) violationSetType {
+// 	if tree.id == 1 {
+// 		if bad.rank > tree.rootRank() {
+// 			bad.violatingSelf = tree.root.vList.PushFront(bad)
+// 			return vSet
+// 		} else {
+// 			if tree.mainTreeGuideW.boundArray[bad.rank].fst != 0 {
+// 				bad.violatingSelf = tree.root.wList.InsertAfter(bad, tree.rankPointersW[bad.rank].violatingSelf)
+// 			} else {
+// 				bad.violatingSelf = tree.root.wList.PushFront(bad)
+// 				tree.rankPointersW[bad.rank] = bad
+// 			}
 
-			tree.numOfNodesInW[bad.rank]++
-			return wSet
-		}
-	}
+// 			tree.numOfNodesInW[bad.rank]++
+// 			return wSet
+// 		}
+// 	}
 
-	return error
-}
+// 	return error
+// }
 
 func (tree *tree) children() *list.List {
 	return tree.root.children
@@ -61,6 +61,7 @@ func (tree *tree) children() *list.List {
 
 func (tree *tree) addRootChild(child *node) {
 	tree.root.addChild(child, tree.childrenRank[child.rank])
+
 	if child.rank < tree.root.rank-2 {
 		// tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[child.rank]), child.rank)
 	}
@@ -89,9 +90,9 @@ func (tree *tree) RemoveNode(child *node) {
 
 func (tree *tree) removeRootChild(child *node) {
 	tree.root.removeChild(child)
-	if child.rank < tree.root.rank-2 {
+	// if child.rank < tree.root.rank-2 {
 		// tree.upperBoundGuide.update(int(tree.root.numOfChildren[child.rank]), child.rank)
-	}
+	// }
 }
 
 func (tree *tree) delinkFromRoot() ([]*node, uint) {
@@ -112,10 +113,6 @@ func (tree *tree) Insert(node *node) {
 
 	tree.handleHighRank(tree.root.rank-2)
 	tree.handleHighRank(tree.root.rank-1)
-
-	if tree.id == 2{
-		// TODO
-	}
 }
 
 func (tree *tree) cut(node *node) {
@@ -140,17 +137,27 @@ func (tree *tree) cut(node *node) {
 
 	tree.handleHighRank(tree.root.rank-2)
 	tree.handleHighRank(tree.root.rank-1)
+
+
 }
 
 func (tree *tree) incRank(node1 *node, node2 *node) {
-	if tree.rootRank() > node1.rank || tree.rootRank() > node2.rank {
+	if tree.RootRank() > node1.rank || tree.RootRank() > node2.rank {
 		panic("Tree ranks don't match")
 	}
 
-	tree.root.incRank(node1, node2)
+	tree.root.link(node1, node2)
 	tree.childrenRank = append(tree.childrenRank, node2)
-	tree.rankPointersW = append(tree.rankPointersW, nil)
-	tree.numOfNodesInW = append(tree.numOfNodesInW, 0)
+}
+
+func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) []action {
+	if increase {
+		return tree.upperBoundGuide.forceIncrease(rank, numOfChildren, 3)
+	}
+
+	reduceVal := 2
+	if tree.childrenRank[rank].leftBrother().numOfChildren[rank] == 3 {reduceVal = 3}
+	return tree.lowerBoundGuide.forceIncrease(rank, numOfChildren, reduceVal)
 }
 
 func (tree *tree) performeAction(node *node, action action, reduceType reduceType) {
@@ -161,16 +168,7 @@ func (tree *tree) performeAction(node *node, action action, reduceType reduceTyp
 		// tree.lowerBoundGuide.update(-int(tree.root.numOfChildren[action.index+1]), uint(action.index+1))
 	} else {
 
-		removedTree := tree.childrenRank[action.index]
-		tree.removeRootChild(removedTree)
-
-		nodes, _ := removedTree.delink()
-		for _, n := range nodes {
-			tree.Insert(n)
-		}
-
-		tree.Insert(removedTree)
-	}
+			}
 }
 
 func (tree *tree) link(rank uint) {
@@ -209,69 +207,12 @@ func (tree *tree) handleHighRank(rank uint) {
 }
 
 func (tree *tree) reduceViolaton(x1 *node, x2 *node) {
-	if x1.isGood() || x2.isGood() {
-		if x1.isGood() {
-			x1.removeSelfFromViolating()
-			tree.numOfNodesInW[x1.rank]--
-		}
-		if x2.isGood() {
-			x2.removeSelfFromViolating()
-			tree.numOfNodesInW[x2.rank]--
-		}
-	} else {
-		if x1.parent != x2.parent {
-			if x1.parent.value <= x2.parent.value {
-				x1.swapBrothers(x2)
-			} else {
-				x2.swapBrothers(x1)
-			}
-		}
-		tree.removeViolatingNode(x1, x2)
-	}
+
 }
 
 
 func (tree *tree) removeViolatingNode(rmNode *node, otherBrother *node) {
-	if tree.id == 1 {
-		parent := rmNode.parent
-		replacement := tree.childrenRank[parent.rank]
-		grandParent := parent.parent
-		if otherBrother == nil {
-			otherBrother = func () *node {
-				if rmNode.leftBrother().rank != rmNode.rank {
-					return rmNode.rightBrother()
-				} else {
-					return rmNode.leftBrother()
-				}
-			}()
-		}
 
-		if parent.numOfChildren[rmNode.rank] == 2 {
-			if parent.rank == rmNode.rank+1 {
-				if parent != tree.root {
-					tree.cut(replacement)
-					tree.addChildTo(grandParent, replacement, parent)
-					grandParent.removeChild(parent)
-				} else {
-					tree.cut(parent)
-				}
-
-				parent.removeChild(rmNode)
-				parent.removeChild(otherBrother)
-				tree.Insert(parent)
-			} else {
-				parent.removeChild(rmNode)
-				parent.removeChild(otherBrother)
-			}
-			otherBrother.removeSelfFromViolating()
-			tree.Insert(otherBrother)
-			tree.Insert(rmNode)
-		} else {
-			parent.removeChild(rmNode)
-			tree.Insert(rmNode)
-		}
-		rmNode.removeSelfFromViolating()
-	}
 }
 
 // ######################################## UTIL #######################################

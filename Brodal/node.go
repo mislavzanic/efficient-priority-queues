@@ -78,7 +78,6 @@ func (parent *node) removeChild(child *node) uint {
 	parent.children.Remove(child.self)
 	parent.numOfChildren[child.rank]--
 
-
 	parent.mbyUpdateRank()
 
 	return parent.numOfChildren[child.rank]

@@ -5,6 +5,10 @@ import "math"
 type BrodalHeap struct {
 	tree1 *tree
 	tree2 *tree
+
+	numOfNodesInT1W []uint
+	rankPointersT1W []*node
+	t1GuideW        *guide
 }
 
 type violationSetType byte
@@ -12,12 +16,12 @@ type violationSetType byte
 const (
 	wSet  violationSetType = 0
 	vSet                   = 1
-	error                  = 2
+	notViolation           = 2
 )
 
 const ALPHA int = 10
 
-func newHeap(value float64) *BrodalHeap {
+func NewHeap(value float64) *BrodalHeap {
 	return &BrodalHeap{
 		tree1: newTree(value, 1),
 		tree2: nil,
@@ -51,18 +55,19 @@ func (bh *BrodalHeap) DeleteMin() {
 
 	for bh.tree2.children().Len() != 0 {
 		bh.tree2.removeRootChild(child.Value.(*node))
-		bh.tree1.insert(child.Value.(*node))
+		bh.tree1.Insert(child.Value.(*node))
 		child = bh.tree2.children().Front()
 	}
 
-	bh.tree1.insert(bh.tree2.root)
+	bh.tree1.Insert(bh.tree2.root)
 	bh.tree2 = nil
 
 	newMin := bh.tree1.childrenRank[bh.tree1.rootRank()]
+	//TODO
 }
 
 func (bh *BrodalHeap) Insert(value float64) {
-	otherHeap := newHeap(value)
+	otherHeap := NewHeap(value)
 	bh.Meld(otherHeap)
 }
 
@@ -84,11 +89,11 @@ func (bh *BrodalHeap) Meld(other *BrodalHeap) {
 				if maxTree.root.rank == tree.root.rank && maxTree != minTree {
 					nodes, _ := tree.delinkFromRoot()
 					for _, n := range nodes {
-						maxTree.insert(n)
+						bh.insertNodeIntoTree(maxTree, n)
 					}
 				}
 
-				maxTree.insert(tree.root)
+				bh.insertNodeIntoTree(maxTree, tree.root)
 			}
 		}
 
@@ -101,36 +106,64 @@ func (bh *BrodalHeap) Meld(other *BrodalHeap) {
 	}
 }
 
+func (bh *BrodalHeap) mbyRemoveFromViolating(node *node) {
+	if node.parentViolatingList != nil { bh.removeFromViolating(node) }
+}
+
+func (bh *BrodalHeap) removeFromViolating(node *node) {
+	node.removeSelfFromViolating()
+}
+
+func (bh *BrodalHeap) mbyAddViolation(mbyBad *node) violationSetType {
+	if !mbyBad.isGood() { return bh.addViolation(mbyBad) }
+	return notViolation
+}
+
 func (bh *BrodalHeap) addViolation(bad *node) violationSetType {
-	return bh.tree1.addViolation(bad)
+	if bad.rank > bh.tree1.RootRank() {
+		bad.violatingSelf = bh.tree1.root.vList.PushFront(bad)
+		return vSet
+	}
+	// else
+
+	if bh.t1GuideW.boundArray[bad.rank].fst != 0 {
+		bad.violatingSelf = bh.tree1.root.wList.InsertAfter(bad, bh.rankPointersT1W[bad.rank].violatingSelf)
+	} else {
+		bad.violatingSelf = bh.tree1.root.wList.PushFront(bad)
+		bh.rankPointersT1W[bad.rank] = bad
+	}
+
+	bh.numOfNodesInT1W[bad.rank]++
+	return wSet
 }
 
 func (bh *BrodalHeap) updateViolatingSet(setType violationSetType, node *node) {
-	if setType == error {
+	if setType == notViolation {
 		panic("Wrong set type")
 	}
 
 	if setType == wSet {
 		bh.updateWSet(node)
 	} else {
-
+		// TODO update vset
+		bh.updateVSet(node)
 	}
 }
 
 func (bh *BrodalHeap) updateWSet(bad *node) {
 
-	actions := bh.tree1.mainTreeGuideW.forceIncrease(int(bad.rank), int(bh.tree1.numOfNodesInW[bad.rank]), 2)
+	acts := bh.t1GuideW.forceIncrease(int(bad.rank), int(bh.numOfNodesInT1W[bad.rank]), 2)
 
-	for _, action := range actions {
-		bh.performeAction(action)
+	for _, act := range acts {
+		bh.performeAct(act)
 	}
 }
 
-func (bh *BrodalHeap) performeAction(act action) {
+func (bh *BrodalHeap) performeAct(act action) {
 	numOfSonsOfT2 := 0
 	notSonsOfT2 := []*node{}
 
-	for e := bh.tree1.rankPointersW[act.index].violatingSelf; e.Value.(*node).rank != uint(act.index); e = e.Next() {
+	for e := bh.rankPointersT1W[act.index].violatingSelf; e.Value.(*node).rank != uint(act.index); e = e.Next() {
 		if e.Value.(*node).parent == bh.tree2.root {
 			numOfSonsOfT2++
 		} else {
@@ -146,8 +179,8 @@ func (bh *BrodalHeap) performeAction(act action) {
 			numOfRemoved++
 		}
 
-		for e := bh.tree1.rankPointersW[act.index].violatingSelf; e.Value.(*node).rank != uint(act.index) && numOfRemoved < 2; {
-			bh.tree1.rankPointersW[act.index] = e.Next().Value.(*node)
+		for e := bh.rankPointersT1W[act.index].violatingSelf; e.Value.(*node).rank != uint(act.index) && numOfRemoved < 2; {
+			bh.rankPointersT1W[act.index] = e.Next().Value.(*node)
 
 			e.Value.(*node).removeSelfFromViolating()
 			bh.tree2.cut(e.Value.(*node))
@@ -172,5 +205,150 @@ func (bh *BrodalHeap) performeAction(act action) {
 		}
 	}
 
-	bh.tree1.numOfNodesInW[act.index] -= 2
+	bh.numOfNodesInT1W[act.index] -= 2
+}
+
+func (bh *BrodalHeap) updateVSet(bad *node) {
+
+}
+
+func (bh *BrodalHeap) insertNodeIntoTree(tree *tree, node *node) {
+	tree.addRootChild(node)
+	bh.mbyAddViolation(node)
+
+	bh.updateLowRank(tree, node, true)
+
+	bh.updateHighRank(tree, tree.root.rank-2)
+	bh.updateHighRank(tree, tree.root.rank-1)
+}
+
+func (bh *BrodalHeap) cutNodeFromTree(tree *tree, node *node) {
+	bh.mbyRemoveFromViolating(node)
+	tree.removeRootChild(node)
+
+	bh.updateLowRank(tree, node, false)
+
+	bh.updateHighRank(tree, tree.root.rank-2)
+	bh.updateHighRank(tree, tree.root.rank-1)
+}
+
+func (bh *BrodalHeap) updateLowRank(tree *tree, node *node, insert bool) {
+	if node.rank < tree.root.rank - 2 {
+		response := tree.askGuide(int(node.rank), int(tree.root.numOfChildren[node.rank]), insert)
+
+		for _, act := range response {
+			if insert {
+				tree.link(uint(act.index))
+			} else {
+				removeThis := tree.childrenRank[act.index]
+				tree.removeRootChild(removeThis)
+
+				nodes, _ := removeThis.delink()
+				for _, n := range nodes {
+					bh.insertNodeIntoTree(tree, n)
+				}
+				bh.insertNodeIntoTree(tree, removeThis)
+			}
+		}
+	}
+}
+
+func (bh *BrodalHeap) updateHighRank(tree *tree, rank uint) {
+	if tree.root.numOfChildren[rank] > 7 {
+		nodeSliceX, _ := tree.root.delink()
+		nodeSliceY, _ := tree.root.delink()
+		nodeSliceZ, _ := tree.root.delink()
+
+		minNode1, nodeX1, nodeY1 := getMinNode(nodeSliceX[0], nodeSliceX[1], nodeSliceY[0])
+		minNode2, nodeX2, nodeY2 := getMinNode(nodeSliceY[1], nodeSliceZ[1], nodeSliceZ[0])
+
+		minNode1.link(nodeX1, nodeY1)
+		minNode2.link(nodeX2, nodeY2)
+
+		if rank == tree.root.rank-1 {
+			bh.incTreeRank(tree, minNode1, minNode2)
+		} else {
+			bh.insertNodeIntoTree(tree, nodeSliceX[0])
+			bh.insertNodeIntoTree(tree, nodeSliceY[1])
+		}
+	} else if tree.root.numOfChildren[rank] < 2 {
+		//...
+	}
+}
+
+func (bh *BrodalHeap) incTreeRank(tree *tree, node1 *node, node2 *node) {
+	if tree.id == 1 {
+		bh.rankPointersT1W = append(bh.rankPointersT1W, nil)
+		bh.numOfNodesInT1W = append(bh.numOfNodesInT1W, 0)
+	}
+
+	tree.incRank(node1, node2)
+
+	bh.mbyAddViolation(node1)
+	bh.mbyAddViolation(node2)
+}
+
+func (bh *BrodalHeap) reduceViolation(x1 *node, x2 *node) {
+	if x1.isGood() || x2.isGood() {
+		if x1.isGood() {
+			x1.removeSelfFromViolating()
+			bh.numOfNodesInT1W[x1.rank]--
+		}
+		if x2.isGood() {
+			x2.removeSelfFromViolating()
+			bh.numOfNodesInT1W[x2.rank]--
+		}
+	} else {
+		if x1.parent != x2.parent {
+			if x1.parent.value <= x2.parent.value {
+				x1.swapBrothers(x2)
+			} else {
+				x2.swapBrothers(x1)
+			}
+		}
+		bh.removeViolatingNode(x1, x2)
+	}
+}
+
+func (bh *BrodalHeap) removeViolatingNode(rmNode *node, otherBrother *node) {
+	parent := rmNode.parent
+	replacement := bh.tree1.childrenRank[parent.rank]
+	grandParent := parent.parent
+	if otherBrother == nil {
+		otherBrother = func () *node {
+			if rmNode.leftBrother().rank != rmNode.rank {
+				return rmNode.rightBrother()
+			} else {
+				return rmNode.leftBrother()
+			}
+		}()
+	}
+
+	if parent.numOfChildren[rmNode.rank] == 2 {
+		if parent.rank == rmNode.rank+1 {
+			if grandParent != bh.tree1.root {
+				bh.cutNodeFromTree(bh.tree1, replacement)
+				grandParent.addChild(replacement, parent)
+				bh.mbyAddViolation(replacement)
+				grandParent.removeChild(parent)
+			} else {
+				bh.cutNodeFromTree(bh.tree1, parent)
+			}
+
+			parent.removeChild(rmNode)
+			parent.removeChild(otherBrother)
+			bh.insertNodeIntoTree(bh.tree1, parent)
+		} else {
+			parent.removeChild(rmNode)
+			parent.removeChild(otherBrother)
+		}
+		otherBrother.removeSelfFromViolating()
+
+		bh.insertNodeIntoTree(bh.tree1, otherBrother)
+		bh.insertNodeIntoTree(bh.tree1, rmNode)
+	} else {
+		parent.removeChild(rmNode)
+		bh.insertNodeIntoTree(bh.tree1, rmNode)
+	}
+	rmNode.removeSelfFromViolating()
 }
