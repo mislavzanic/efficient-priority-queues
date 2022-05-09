@@ -226,33 +226,51 @@ func (tree *tree) reduceViolaton(x1 *node, x2 *node) {
 				x2.swapBrothers(x1)
 			}
 		}
+		tree.removeViolatingNode(x1, x2)
+	}
+}
 
-		if x1.parent.numOfChildren[x1.rank] == 2 {
-			if x1.parent.rank == x1.rank+1 {
-				if x1.parent != tree.root {
-					replacement := tree.childrenRank[x1.parent.rank]
-					tree.cut(replacement)
-					tree.addChildTo(x1.parent.parent, replacement, x1.parent)
 
-					x1.parent.parent.removeChild(x1.parent)
+func (tree *tree) removeViolatingNode(rmNode *node, otherBrother *node) {
+	if tree.id == 1 {
+		parent := rmNode.parent
+		replacement := tree.childrenRank[parent.rank]
+		grandParent := parent.parent
+		if otherBrother == nil {
+			otherBrother = func () *node {
+				if rmNode.leftBrother().rank != rmNode.rank {
+					return rmNode.rightBrother()
 				} else {
-					tree.cut(x1.parent)
+					return rmNode.leftBrother()
+				}
+			}()
+		}
+
+		if parent.numOfChildren[rmNode.rank] == 2 {
+			if parent.rank == rmNode.rank+1 {
+				if parent != tree.root {
+					tree.cut(replacement)
+					tree.addChildTo(grandParent, replacement, parent)
+					grandParent.removeChild(parent)
+				} else {
+					tree.cut(parent)
 				}
 
-				x1.parent.removeChild(x1)
-				x1.parent.removeChild(x2)
-
-				tree.Insert(x1.parent)
+				parent.removeChild(rmNode)
+				parent.removeChild(otherBrother)
+				tree.Insert(parent)
 			} else {
-				x1.parent.removeChild(x1)
-				x1.parent.removeChild(x2)
+				parent.removeChild(rmNode)
+				parent.removeChild(otherBrother)
 			}
-			tree.Insert(x1)
-			tree.Insert(x2)
+			otherBrother.removeSelfFromViolating()
+			tree.Insert(otherBrother)
+			tree.Insert(rmNode)
 		} else {
-			x1.parent.removeChild(x1)
-			tree.Insert(x1)
+			parent.removeChild(rmNode)
+			tree.Insert(rmNode)
 		}
+		rmNode.removeSelfFromViolating()
 	}
 }
 
@@ -321,30 +339,3 @@ func mbySwapTree(ptr1 *tree, ptr2 *tree, cond bool) (*tree, *tree) {
 	return ptr1, ptr2
 }
 
-func (tree *tree) removeViolatingNode(rmNode *node) {
-	if tree.id == 1 {
-		parent := rmNode.parent
-		if parent.numOfChildren[rmNode.rank] == 2 {
-			replacement := tree.childrenRank[parent.rank]
-			grandParent := parent.parent
-
-			otherBrother := func () *node {
-				if rmNode.leftBrother().rank != rmNode.rank {
-					return rmNode.rightBrother()
-				} else {
-					return rmNode.leftBrother()
-				}
-			}()
-
-			parent.removeChild(rmNode)
-			parent.removeChild(otherBrother)
-			otherBrother.removeSelfFromViolating()
-			tree.Insert(otherBrother)
-			tree.cut(replacement)
-			grandParent.addChild(replacement, parent)
-			grandParent.removeChild(parent)
-		} else {
-			parent.removeChild(rmNode)
-		}
-	}
-}

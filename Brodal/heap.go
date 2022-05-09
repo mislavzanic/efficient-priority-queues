@@ -126,7 +126,6 @@ func (bh *BrodalHeap) updateWSet(bad *node) {
 	}
 }
 
-// big TODO
 func (bh *BrodalHeap) performeAction(act action) {
 	numOfSonsOfT2 := 0
 	notSonsOfT2 := []*node{}
@@ -143,9 +142,7 @@ func (bh *BrodalHeap) performeAction(act action) {
 		numOfRemoved := 0
 		for _, rmNode := range notSonsOfT2 {
 
-			bh.tree1.removeViolatingNode(rmNode)
-			rmNode.removeSelfFromViolating()
-			bh.tree1.Insert(rmNode)
+			bh.tree1.removeViolatingNode(rmNode, nil)
 			numOfRemoved++
 		}
 
@@ -158,9 +155,6 @@ func (bh *BrodalHeap) performeAction(act action) {
 			bh.tree1.Insert(e.Value.(*node))
 			numOfRemoved++
 		}
-
-		bh.tree1.numOfNodesInW[act.index] -= uint(numOfRemoved)
-
 	} else {
 		// tree reduce violations
 		bh.tree1.reduceViolaton(notSonsOfT2[0], notSonsOfT2[1])
@@ -174,8 +168,9 @@ func (bh *BrodalHeap) performeAction(act action) {
 		}()
 
 		if  notGood != nil {
-			bh.tree1.removeViolatingNode(notGood)
+			bh.tree1.removeViolatingNode(notGood, nil)
 		}
-
 	}
+
+	bh.tree1.numOfNodesInW[act.index] -= 2
 }
