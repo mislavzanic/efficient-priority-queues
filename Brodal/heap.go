@@ -243,7 +243,7 @@ func (bh *BrodalHeap) updateLowRank(tree *tree, node *node, insert bool) {
 				removeThis := tree.childrenRank[act.index]
 				tree.removeRootChild(removeThis)
 
-				nodes, _ := removeThis.delink()
+				nodes := removeThis.delink()
 				for _, n := range nodes {
 					bh.insertNodeIntoTree(tree, n)
 				}
@@ -255,9 +255,9 @@ func (bh *BrodalHeap) updateLowRank(tree *tree, node *node, insert bool) {
 
 func (bh *BrodalHeap) updateHighRank(tree *tree, rank uint) {
 	if tree.root.numOfChildren[rank] > 7 {
-		nodeSliceX, _ := tree.root.delink()
-		nodeSliceY, _ := tree.root.delink()
-		nodeSliceZ, _ := tree.root.delink()
+		nodeSliceX := tree.root.delink()
+		nodeSliceY := tree.root.delink()
+		nodeSliceZ := tree.root.delink()
 
 		minNode1, nodeX1, nodeY1 := getMinNode(nodeSliceX[0], nodeSliceX[1], nodeSliceY[0])
 		minNode2, nodeX2, nodeY2 := getMinNode(nodeSliceY[1], nodeSliceZ[1], nodeSliceZ[0])
@@ -277,6 +277,7 @@ func (bh *BrodalHeap) updateHighRank(tree *tree, rank uint) {
 }
 
 func (bh *BrodalHeap) incTreeRank(tree *tree, node1 *node, node2 *node) {
+
 	if tree.id == 1 {
 		bh.rankPointersT1W = append(bh.rankPointersT1W, nil)
 		bh.numOfNodesInT1W = append(bh.numOfNodesInT1W, 0)
@@ -291,11 +292,11 @@ func (bh *BrodalHeap) incTreeRank(tree *tree, node1 *node, node2 *node) {
 func (bh *BrodalHeap) reduceViolation(x1 *node, x2 *node) {
 	if x1.isGood() || x2.isGood() {
 		if x1.isGood() {
-			x1.removeSelfFromViolating()
+			x1.mbyRemoveSelfFromViolating()
 			bh.numOfNodesInT1W[x1.rank]--
 		}
 		if x2.isGood() {
-			x2.removeSelfFromViolating()
+			x2.mbyRemoveSelfFromViolating()
 			bh.numOfNodesInT1W[x2.rank]--
 		}
 	} else {
