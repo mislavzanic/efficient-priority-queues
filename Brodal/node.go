@@ -127,9 +127,7 @@ func (parent *node) delink() []*node {
 	return []*node{node1, node2}
 }
 
-func (this *node) mbyRemoveSelfFromViolating() {
-	if this.parentViolatingList != nil {
-		this.parentViolatingList.Remove(this.violatingSelf)
-		this.parentViolatingList = nil
-	}
+func (this *node) removeSelfFromViolating() {
+	this.parentViolatingList.Remove(this.violatingSelf)
+	this.parentViolatingList = nil
 }
