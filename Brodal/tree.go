@@ -33,10 +33,9 @@ func (tree *tree) RootRank() uint {
 	return tree.root.rank
 }
 
-func (tree *tree) children() *list.List {
-	return tree.root.children
+func (tree *tree) LeftmostSon() *node {
+	return tree.root.leftSon()
 }
-
 
 func (tree *tree) addRootChild(child *node) {
 	tree.root.addChild(child, tree.childrenRank[child.rank])

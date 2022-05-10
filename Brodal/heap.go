@@ -157,7 +157,26 @@ func (bh *BrodalHeap) updateWSet(bad *node) {
 
 func (bh *BrodalHeap) updateVSet(bad *node) {
 	if bh.tree1.root.vList.Len() > ALPHA * int(bh.tree1.RootRank()) {
+		if bh.tree2 == nil {
+			panic("This can't happen")
+		}
 
+		if bh.tree2.RootRank() <= bh.tree1.RootRank() + 1 {
+			for leftmostSon := bh.tree2.LeftmostSon(); leftmostSon.rank < bh.tree1.RootRank(); {
+				bh.cutNodeFromTree(bh.tree2, leftmostSon)
+				bh.insertNodeIntoTree(bh.tree1, leftmostSon)
+			}
+			bh.insertNodeIntoTree(bh.tree1, bh.tree2.root)
+			bh.tree2 = nil
+		} else {
+			sonOfCorrectRank := bh.tree2.childrenRank[bh.tree1.RootRank() + 1]
+			for leftmostSon := sonOfCorrectRank.leftSon(); leftmostSon.rank < bh.tree1.RootRank(); {
+				// TODO ovo napravit i za cvorove......
+				// bh.cutNodeFromTree(bh.tree2, leftmostSon)
+				bh.insertNodeIntoTree(bh.tree1, leftmostSon)
+			}
+			bh.insertNodeIntoTree(bh.tree1, sonOfCorrectRank)
+		}
 	}
 }
 
