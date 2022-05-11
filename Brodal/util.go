@@ -1,5 +1,7 @@
 package Brodal
 
+import "container/list"
+
 
 func getMinTree(tree1 *tree, tree2 *tree) (*tree, *tree) {
 	if tree1 == nil || tree2 == nil {
@@ -44,21 +46,17 @@ func mbySwapTree(ptr1 *tree, ptr2 *tree, cond bool) (*tree, *tree) {
 	return ptr1, ptr2
 }
 
-func getMinNode(xNode *node, yNode *node, zNode *node) (*node, *node, *node) {
-	minNode := zNode
-
-	if xNode.value < minNode.value {
-		minNode = xNode
-		xNode = zNode
+func getMinNode(xNode *node, yNode *node) (*node, *node) {
+	if xNode.value < yNode.value {
+		return xNode, yNode
 	}
+	return yNode, xNode
+}
 
-	if yNode.value < minNode.value {
-		temp := minNode
-		minNode = yNode
-		yNode = temp
-	}
-
-	return minNode, xNode, yNode
+func getMinNodeFrom3(xNode *node, yNode *node, zNode *node) (*node, *node, *node) {
+	minNode, otherNode := getMinNode(xNode, yNode)
+	minNode, otherOtherNode := getMinNode(minNode, zNode)
+	return minNode, otherNode, otherOtherNode
 }
 
 func mbySwapNode(ptr1 *node, ptr2 *node, cond bool) {
@@ -67,4 +65,14 @@ func mbySwapNode(ptr1 *node, ptr2 *node, cond bool) {
 		*ptr1 = *ptr2
 		*ptr2 = temp
 	}
+}
+func getMinFromList(list *list.List) *list.Element {
+	minVal := list.Front()
+	for e := list.Front(); e != nil; e = e.Next() {
+		if e.Value.(*node).value < minVal.Value.(*node).value {
+			minVal = e
+		}
+	}
+
+	return minVal
 }

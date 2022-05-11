@@ -45,6 +45,18 @@ func (this *node) rightBrother() *node {
 	return this.self.Next().Value.(*node)
 }
 
+func (this *node) getMinFromW() *node {
+	return getMinFromList(this.wList).Value.(*node)
+}
+
+func (this *node) getMinFromV() *node {
+	return getMinFromList(this.vList).Value.(*node)
+}
+
+func (this *node) getMinFromChildren() *node {
+	return getMinFromList(this.children).Value.(*node)
+}
+
 func (node *node) isGood() bool {
 	return node.value > node.parent.value
 }
@@ -64,7 +76,7 @@ func (parent *node) removeFirstChild() (*node, uint) {
 	return child, numOfChildren
 }
 
-func (parent *node) addChild(child *node, newRightBrother *node) {
+func (parent *node) addBrother(child *node, newRightBrother *node) {
 	if parent.rank == child.rank {
 		panic("Increase rank of parent first")
 	}

@@ -28,6 +28,13 @@ func NewHeap(value float64) *BrodalHeap {
 	}
 }
 
+func HeapFrom2Trees(tree1 *tree, tree2 *tree) *BrodalHeap {
+	return &BrodalHeap{
+		tree1: tree1,
+		tree2: tree2,
+	}
+}
+
 func (bh *BrodalHeap) Min() float64 {
 	return bh.tree1.root.value
 }
@@ -48,18 +55,55 @@ func (bh *BrodalHeap) Delete(node *node) {
 }
 
 func (bh *BrodalHeap) DeleteMin() {
-	child := bh.tree2.children().Front()
+	child := bh.tree2.Children().Front()
 
-	for bh.tree2.children().Len() != 0 {
+	for bh.tree2.Children().Len() != 0 {
 		bh.tree2.removeRootChild(child.Value.(*node))
 		bh.insertNodeIntoTree(bh.tree1, child.Value.(*node))
-		child = bh.tree2.children().Front()
+		child = bh.tree2.Children().Front()
 	}
 
 	bh.insertNodeIntoTree(bh.tree1, bh.tree2.root)
 	bh.tree2 = nil
 
-	// newMin := bh.tree1.childrenRank[bh.tree1.RootRank()]
+	minW := bh.tree1.root.getMinFromW()
+	minV := bh.tree1.root.getMinFromV()
+	minTree := bh.tree1.root.getMinFromChildren()
+	newMin, _, _ := getMinNodeFrom3(minW, minV, minTree)
+
+	mbySwap := bh.tree1.childrenRank[newMin.rank]
+	indepTrees := bh.tree1.rmRfRoot()
+	createdViolation := false
+
+	if newMin.parent != nil {
+		mbySwap.parent = newMin.parent
+		newMin.parent = nil
+
+		indepTrees.Remove(mbySwap.self)
+		mbySwap.self = newMin.self
+		newMin.self = nil
+
+		createdViolation = !mbySwap.isGood()
+	}
+
+	bh.tree1 = newTree(newMin.value, 1)
+
+	for e := indepTrees.Back(); e != nil; e = e.Prev() {
+		if e.Value.(*node).rank == 0 {
+			// popravit meld TODO
+			bh.Meld(NewHeap(e.Value.(*node).value))
+		} else {
+			bh.insertNodeIntoTree(bh.tree1, e.Value.(*node))
+		}
+	}
+
+	for e := newMin.children.Back(); e != nil; e = e.Prev() {
+		bh.insertNodeIntoTree(bh.tree1, e.Value.(*node))
+	}
+
+	if createdViolation {
+		//...
+	}
 	//TODO
 }
 
@@ -160,7 +204,6 @@ func (bh *BrodalHeap) updateVSet(bad *node) {
 		if bh.tree2 == nil {
 			panic("This can't happen")
 		}
-
 		if bh.tree2.RootRank() <= bh.tree1.RootRank() + 1 {
 			for leftmostSon := bh.tree2.LeftmostSon(); leftmostSon.rank < bh.tree1.RootRank(); {
 				bh.cutNodeFromTree(bh.tree2, leftmostSon)
@@ -170,10 +213,11 @@ func (bh *BrodalHeap) updateVSet(bad *node) {
 			bh.tree2 = nil
 		} else {
 			sonOfCorrectRank := bh.tree2.childrenRank[bh.tree1.RootRank() + 1]
-			for leftmostSon := sonOfCorrectRank.leftSon(); leftmostSon.rank < bh.tree1.RootRank(); {
-				// TODO ovo napravit i za cvorove......
-				// bh.cutNodeFromTree(bh.tree2, leftmostSon)
-				bh.insertNodeIntoTree(bh.tree1, leftmostSon)
+			for sonOfCorrectRank.leftSon().rank >= bh.tree1.RootRank() {
+				nodes := sonOfCorrectRank.delink()
+				for _, node := range nodes {
+					bh.insertNodeIntoTree(bh.tree1, node)
+				}
 			}
 			bh.insertNodeIntoTree(bh.tree1, sonOfCorrectRank)
 		}
@@ -275,8 +319,8 @@ func (bh *BrodalHeap) updateHighRank(tree *tree, rank uint) {
 		nodeSliceY := tree.root.delink()
 		nodeSliceZ := tree.root.delink()
 
-		minNode1, nodeX1, nodeY1 := getMinNode(nodeSliceX[0], nodeSliceX[1], nodeSliceY[0])
-		minNode2, nodeX2, nodeY2 := getMinNode(nodeSliceY[1], nodeSliceZ[1], nodeSliceZ[0])
+		minNode1, nodeX1, nodeY1 := getMinNodeFrom3(nodeSliceX[0], nodeSliceX[1], nodeSliceY[0])
+		minNode2, nodeX2, nodeY2 := getMinNodeFrom3(nodeSliceY[1], nodeSliceZ[1], nodeSliceZ[0])
 
 		minNode1.link(nodeX1, nodeY1)
 		minNode2.link(nodeX2, nodeY2)

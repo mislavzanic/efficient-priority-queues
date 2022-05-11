@@ -1,8 +1,6 @@
 package Brodal
 
-import (
-	"container/list"
-)
+import "container/list"
 
 type tree struct {
 	root *node
@@ -31,6 +29,19 @@ const LOWER_BOUND int = -2
 
 func (tree *tree) RootRank() uint {
 	return tree.root.rank
+}
+
+func (tree *tree) Children() *list.List {
+	return tree.root.children
+}
+
+func (tree *tree) rmRfRoot() *list.List {
+	children := tree.Children()
+	for e := children.Front(); e != nil; e = e.Next() {
+		e.Value.(*node).parent = nil
+	}
+	tree.childrenRank = nil
+	return children
 }
 
 func (tree *tree) LeftmostSon() *node {
@@ -79,7 +90,7 @@ func (tree *tree) link(rank uint) {
 		tree.childrenRank[rank] = nil
 	}
 
-	minNode, nodeX, nodeY := getMinNode(nodeX, nodeY, nodeZ)
+	minNode, nodeX, nodeY := getMinNodeFrom3(nodeX, nodeY, nodeZ)
 
 	minNode.link(nodeX, nodeY)
 }
