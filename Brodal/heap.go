@@ -90,8 +90,7 @@ func (bh *BrodalHeap) DeleteMin() {
 
 	for e := indepTrees.Back(); e != nil; e = e.Prev() {
 		if e.Value.(*node).rank == 0 {
-			// popravit meld TODO
-			bh.Meld(NewHeap(e.Value.(*node).value))
+			bh.Insert(e.Value.(*node).value)
 		} else {
 			bh.insertNodeIntoTree(bh.tree1, e.Value.(*node))
 		}
@@ -124,18 +123,26 @@ func (bh *BrodalHeap) Meld(other *BrodalHeap) {
 		minTree, _ := getMinTree(bh.tree1, other.tree1)
 		maxTree, others := getMaxTree(trees)
 
-		for _, tree := range others {
-			if tree != minTree && tree != maxTree {
+		if minTree.RootRank() == maxTree.RootRank() {
+			maxTree = minTree
+		}
 
-				// TODO skuzi ovo
-				if maxTree.root.rank == tree.root.rank && maxTree != minTree {
-					nodes := tree.delink()
-					for _, n := range nodes {
-						bh.insertNodeIntoTree(maxTree, n)
+		if maxTree.RootRank() == 0 {
+			maxTree.addFirstChildren(others[0].root, others[1].root)
+			if len(others) == 3 {
+				bh.insertNodeIntoTree(maxTree, others[2].root)
+			}
+		} else {
+			for _, tree := range others {
+				if tree != minTree {
+					for maxTree.root.rank == tree.root.rank && maxTree != minTree {
+						nodes := tree.delink()
+						for _, n := range nodes {
+							bh.insertNodeIntoTree(maxTree, n)
+						}
 					}
+					bh.insertNodeIntoTree(maxTree, tree.root)
 				}
-
-				bh.insertNodeIntoTree(maxTree, tree.root)
 			}
 		}
 

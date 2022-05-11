@@ -76,6 +76,18 @@ func (parent *node) removeFirstChild() (*node, uint) {
 	return child, numOfChildren
 }
 
+func (parent *node) addFirstChildren(child1 *node, child2 *node) {
+	child1.self = parent.children.PushBack(child1)
+	child1.parent = parent
+
+	if len(parent.numOfChildren) == int(child1.rank) {
+		parent.numOfChildren = append(parent.numOfChildren, 1)
+	}
+
+	parent.rank++
+	parent.addBrother(child2, child1)
+}
+
 func (parent *node) addBrother(child *node, newRightBrother *node) {
 	if parent.rank == child.rank {
 		panic("Increase rank of parent first")
@@ -100,8 +112,8 @@ func (this *node) swapBrothers(other *node) {
 			return other.rightBrother()
 		}
 	}()
-	this.parent.addChild(brother, this)
-	other.parent.addChild(this, other)
+	this.parent.addBrother(brother, this)
+	other.parent.addBrother(this, other)
 }
 
 func (parent *node) mbyUpdateRank() {
@@ -122,8 +134,8 @@ func (node *node) link(xNode *node, yNode *node) {
 	}
 
 	node.incRank()
-	node.addChild(xNode, node.leftSon())
-	node.addChild(yNode, node.leftSon())
+	node.addBrother(xNode, node.leftSon())
+	node.addBrother(yNode, node.leftSon())
 	node.mbyUpdateRank()
 
 	node.parent.numOfChildren[node.rank]++

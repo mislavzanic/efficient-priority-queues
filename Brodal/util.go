@@ -21,20 +21,22 @@ func getMaxTree(trees []*tree) (*tree, []*tree) {
 	}
 
 	maxTree := trees[0]
+	maxTreeIndex := 0
 	newTrees := [](*tree){}
 
-	for _, tree := range trees {
+	for i, tree := range trees {
 		if tree != nil {
 			if maxTree.root.rank < tree.root.rank {
 				newTrees = append(newTrees, maxTree)
 				maxTree = tree
+				maxTreeIndex = i
 			} else {
 				newTrees = append(newTrees, tree)
 			}
 		}
 	}
 
-	return maxTree, newTrees
+	return maxTree, append(newTrees[:maxTreeIndex],  newTrees[maxTreeIndex:]...)
 }
 
 func mbySwapTree(ptr1 *tree, ptr2 *tree, cond bool) (*tree, *tree) {
