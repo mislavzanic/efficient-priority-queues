@@ -57,9 +57,10 @@ func (tree *tree) addFirstRootChildren(child1 *node, child2 *node) {
 		tree.childrenRank = append(tree.childrenRank, child1)
 	}
 
-	// nekako napraviti update guide-a
-
 	tree.root.addFirstChildren(child1, child2)
+
+	tree.upperBoundGuide.expand(int(tree.RootRank()))
+	tree.lowerBoundGuide.expand(int(tree.RootRank()))
 }
 
 func (tree *tree) removeRootChild(child *node) {
@@ -77,6 +78,8 @@ func (tree *tree) incRank(node1 *node, node2 *node) {
 
 	tree.root.link(node1, node2)
 	tree.childrenRank = append(tree.childrenRank, node2)
+	tree.upperBoundGuide.expand(int(tree.RootRank()))
+	tree.lowerBoundGuide.expand(int(tree.RootRank()))
 }
 
 func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) []action {

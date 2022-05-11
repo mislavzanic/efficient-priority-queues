@@ -128,7 +128,7 @@ func (bh *BrodalHeap) Meld(other *BrodalHeap) {
 		}
 
 		if maxTree.RootRank() == 0 {
-			maxTree.addFirstChildren(others[0].root, others[1].root)
+			maxTree.addFirstRootChildren(others[0].root, others[1].root)
 			if len(others) == 3 {
 				bh.insertNodeIntoTree(maxTree, others[2].root)
 			}
