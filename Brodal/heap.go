@@ -383,7 +383,7 @@ func (bh *BrodalHeap) removeViolatingNode(rmNode *node, otherBrother *node) {
 		if parent.rank == rmNode.rank+1 {
 			if grandParent != bh.tree1.root {
 				bh.cutNodeFromTree(bh.tree1, replacement)
-				grandParent.addChild(replacement, parent)
+				grandParent.addBrother(replacement, parent)
 				bh.mbyAddViolation(replacement)
 				grandParent.removeChild(parent)
 			} else {
