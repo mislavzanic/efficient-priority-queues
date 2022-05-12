@@ -93,7 +93,7 @@ func (parent *node) addFirstChildren(child1 *node, child2 *node) {
 	parent.addBrother(child2, child1)
 }
 
-func (parent *node) addBrother(child *node, newRightBrother *node) {
+func (parent *node) addBrother(child *node, newLeftBrother *node) {
 	if parent.rank == child.rank {
 		panic("Increase rank of parent first")
 	}
@@ -104,7 +104,7 @@ func (parent *node) addBrother(child *node, newRightBrother *node) {
 
 
 	child.parent = parent
-	child.self = parent.children.InsertBefore(child, newRightBrother.self)
+	child.self = parent.children.InsertAfter(child, newLeftBrother.self)
 
 	parent.numOfChildren[child.rank]++
 }
