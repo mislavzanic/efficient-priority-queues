@@ -73,7 +73,6 @@ func (bh *BrodalHeap) DeleteMin() {
 
 	mbySwap := bh.tree1.childrenRank[newMin.rank]
 	indepTrees := bh.tree1.rmRfRoot()
-	createdViolation := false
 
 	if newMin.parent != nil {
 		mbySwap.parent = newMin.parent
@@ -82,9 +81,9 @@ func (bh *BrodalHeap) DeleteMin() {
 		indepTrees.Remove(mbySwap.self)
 		mbySwap.self = newMin.self
 		newMin.self = nil
-
-		createdViolation = !mbySwap.isGood()
 	}
+
+	oldV, oldW := bh.tree1.root.vList, bh.tree1.root.wList
 
 	bh.tree1 = newTree(newMin.value, 1)
 
@@ -100,10 +99,23 @@ func (bh *BrodalHeap) DeleteMin() {
 		bh.insertNodeIntoTree(bh.tree1, e.Value.(*node))
 	}
 
-	if createdViolation {
-		//...
+	for e := oldV.Front(); e != nil; e = e.Next() {
+		bh.mbyAddViolation(e.Value.(*node))
 	}
-	//TODO
+
+	for e := oldW.Front(); e != nil; e = e.Next() {
+		bh.mbyAddViolation(e.Value.(*node))
+	}
+
+	bh.mbyAddViolation(mbySwap)
+
+	for e := bh.tree1.root.wList.Front(); e != nil; {
+		if e.Next().Value.(*node).rank == e.Value.(*node).rank {
+			bh.reduceViolation(e.Value.(*node), e.Next().Value.(*node))
+		} else {
+			e = e.Next()
+		}
+	}
 }
 
 func (bh *BrodalHeap) Insert(value float64) {
@@ -172,7 +184,7 @@ func (bh *BrodalHeap) removeFromViolating(notBad *node) {
 }
 
 func (bh *BrodalHeap) mbyAddViolation(mbyBad *node) violationSetType {
-	if !mbyBad.isGood() { return bh.addViolation(mbyBad) }
+	if !mbyBad.isGood() && mbyBad.violatingSelf == nil { return bh.addViolation(mbyBad) }
 	return notViolation
 }
 
@@ -182,7 +194,6 @@ func (bh *BrodalHeap) addViolation(bad *node) violationSetType {
 		bh.updateVSet(bad)
 		return vSet
 	}
-	// else
 
 	if bh.t1GuideW.boundArray[bad.rank].fst != 0 {
 		bad.violatingSelf = bh.tree1.root.wList.InsertAfter(bad, bh.rankPointersT1W[bad.rank].violatingSelf)
