@@ -6,7 +6,7 @@ type BrodalHeap struct {
 	tree1 *tree
 	tree2 *tree
 
-	numOfNodesInT1W []uint
+	numOfNodesInT1W []int
 	rankPointersT1W []*node
 	t1GuideW        *guide
 }
@@ -199,7 +199,7 @@ func (bh *BrodalHeap) addViolation(bad *node) violationSetType {
 
 func (bh *BrodalHeap) updateWSet(bad *node) {
 
-	acts := bh.t1GuideW.forceIncrease(int(bad.rank), int(bh.numOfNodesInT1W[bad.rank]), 2)
+	acts := bh.t1GuideW.forceIncrease(bad.rank, bh.numOfNodesInT1W[bad.rank], 2)
 
 	for _, act := range acts {
 		bh.handleWViolations(act)
@@ -207,7 +207,7 @@ func (bh *BrodalHeap) updateWSet(bad *node) {
 }
 
 func (bh *BrodalHeap) updateVSet(bad *node) {
-	if bh.tree1.root.vList.Len() > ALPHA * int(bh.tree1.RootRank()) {
+	if bh.tree1.root.vList.Len() > ALPHA * bh.tree1.RootRank() {
 		if bh.tree2 == nil {
 			panic("This can't happen")
 		}
@@ -219,14 +219,7 @@ func (bh *BrodalHeap) updateVSet(bad *node) {
 			bh.insertNodeIntoTree(bh.tree1, bh.tree2.root)
 			bh.tree2 = nil
 		} else {
-			sonOfCorrectRank := bh.tree2.childrenRank[bh.tree1.RootRank() + 1]
-			for sonOfCorrectRank.leftSon().rank >= bh.tree1.RootRank() {
-				nodes := sonOfCorrectRank.delink()
-				for _, node := range nodes {
-					bh.insertNodeIntoTree(bh.tree1, node)
-				}
-			}
-			bh.insertNodeIntoTree(bh.tree1, sonOfCorrectRank)
+			bh.derankAndInsertRootChild(bh.tree2, bh.tree1, bh.tree2.childrenRank[bh.tree1.RootRank() + 1])
 		}
 	}
 }
@@ -235,7 +228,7 @@ func (bh *BrodalHeap) handleWViolations(act action) {
 	numOfSonsOfT2 := 0
 	notSonsOfT2 := []*node{}
 
-	for e := bh.rankPointersT1W[act.index].violatingSelf; e.Value.(*node).rank != uint(act.index); e = e.Next() {
+	for e := bh.rankPointersT1W[act.index].violatingSelf; e.Value.(*node).rank != act.index; e = e.Next() {
 		if e.Value.(*node).parent == bh.tree2.root {
 			numOfSonsOfT2++
 		} else {
@@ -251,7 +244,7 @@ func (bh *BrodalHeap) handleWViolations(act action) {
 			numOfRemoved++
 		}
 
-		for e := bh.rankPointersT1W[act.index].violatingSelf; e.Value.(*node).rank != uint(act.index) && numOfRemoved < 2; {
+		for e := bh.rankPointersT1W[act.index].violatingSelf; e.Value.(*node).rank != act.index && numOfRemoved < 2; {
 			bh.rankPointersT1W[act.index] = e.Next().Value.(*node)
 
 			e.Value.(*node).removeSelfFromViolating()
@@ -280,66 +273,106 @@ func (bh *BrodalHeap) handleWViolations(act action) {
 }
 
 func (bh *BrodalHeap) insertNodeIntoTree(tree *tree, node *node) {
-	tree.addRootChild(node)
-	bh.mbyAddViolation(node)
-
-	bh.updateLowRank(tree, node, true)
-
+	if node.rank < tree.RootRank() - 2 {
+		bh.updateLowRank(tree, node, true)
+	} else {
+		tree.addRootChild(node)
+		bh.mbyAddViolation(node)
+	}
 	bh.updateHighRank(tree, tree.root.rank-2)
 	bh.updateHighRank(tree, tree.root.rank-1)
 }
 
 func (bh *BrodalHeap) cutNodeFromTree(tree *tree, node *node) {
-	bh.mbyRemoveFromViolating(node)
-	tree.removeRootChild(node)
-
-	bh.updateLowRank(tree, node, false)
-
+	if node.rank < tree.RootRank() - 2 {
+		bh.updateLowRank(tree, node, false)
+	} else {
+		bh.mbyRemoveFromViolating(node)
+		tree.removeRootChild(node)
+	}
 	bh.updateHighRank(tree, tree.root.rank-2)
 	bh.updateHighRank(tree, tree.root.rank-1)
 }
 
+func (bh *BrodalHeap) derankAndInsertRootChild(removeRoot *tree, insertRoot *tree, child *node) {
+	rank := child.rank
+	bh.mbyRemoveFromViolating(child)
+	removeRoot.removeRootChild(child)
+
+	for child.rank >= rank {
+		nodes := child.delink()
+		for _, n := range nodes {
+			bh.insertNodeIntoTree(insertRoot, n)
+		}
+	}
+	bh.insertNodeIntoTree(insertRoot, child)
+}
+
 func (bh *BrodalHeap) updateLowRank(tree *tree, node *node, insert bool) {
-	if node.rank < tree.root.rank - 2 {
-		response := tree.askGuide(int(node.rank), int(tree.root.numOfChildren[node.rank]), insert)
+	response := tree.askGuide(node.rank, tree.root.numOfChildren[node.rank], insert)
 
-		for _, act := range response {
-			if insert {
-				tree.link(uint(act.index))
+	for _, act := range response {
+		if insert {
+			if act.op == Increase {
+				tree.addRootChild(node)
+				bh.mbyAddViolation(node)
 			} else {
-				removeThis := tree.childrenRank[act.index]
-				tree.removeRootChild(removeThis)
-
-				nodes := removeThis.delink()
-				for _, n := range nodes {
-					bh.insertNodeIntoTree(tree, n)
-				}
-				bh.insertNodeIntoTree(tree, removeThis)
+				tree.link(act.index)
+			}
+		} else {
+			if act.op == Increase {
+				bh.mbyRemoveFromViolating(node)
+				tree.removeRootChild(node)
+			} else {
+				bh.derankAndInsertRootChild(tree, tree, tree.childrenRank[act.index])
 			}
 		}
 	}
 }
 
-func (bh *BrodalHeap) updateHighRank(tree *tree, rank uint) {
+func (bh *BrodalHeap) updateHighRank(tree *tree, rank int) {
 	if tree.root.numOfChildren[rank] > 7 {
-		nodeSliceX := tree.root.delink()
-		nodeSliceY := tree.root.delink()
-		nodeSliceZ := tree.root.delink()
-
-		minNode1, nodeX1, nodeY1 := getMinNodeFrom3(nodeSliceX[0], nodeSliceX[1], nodeSliceY[0])
-		minNode2, nodeX2, nodeY2 := getMinNodeFrom3(nodeSliceY[1], nodeSliceZ[1], nodeSliceZ[0])
-
-		minNode1.link(nodeX1, nodeY1)
-		minNode2.link(nodeX2, nodeY2)
-
 		if rank == tree.root.rank-1 {
+			nodeSliceX := tree.root.delink()
+			nodeSliceY := tree.root.delink()
+			nodeSliceZ := tree.root.delink()
+
+			minNode1, nodeX1, nodeY1 := getMinNodeFrom3(nodeSliceX[0], nodeSliceX[1], nodeSliceY[0])
+			minNode2, nodeX2, nodeY2 := getMinNodeFrom3(nodeSliceY[1], nodeSliceZ[1], nodeSliceZ[0])
+
+			minNode1.link(nodeX1, nodeY1)
+			minNode2.link(nodeX2, nodeY2)
+
 			bh.incTreeRank(tree, minNode1, minNode2)
 		} else {
-			bh.insertNodeIntoTree(tree, nodeSliceX[0])
-			bh.insertNodeIntoTree(tree, nodeSliceY[1])
+			tree1 := tree.removeRootChild(tree.childrenRank[rank])
+			tree2 := tree.removeRootChild(tree.childrenRank[rank])
+			tree3 := tree.removeRootChild(tree.childrenRank[rank])
+
+			minTree, tree1, tree2 := getMinNodeFrom3(tree1, tree2, tree3)
+			minTree.link(tree1, tree2)
+			bh.insertNodeIntoTree(tree, minTree)
+			bh.updateHighRank(tree, rank + 1)
 		}
 	} else if tree.root.numOfChildren[rank] < 2 {
-		//...
+		if rank == tree.RootRank() - 2 {
+			takeChildrenFrom := tree.childrenRank[rank + 1]
+
+			if takeChildrenFrom.numOfChildren[rank] <= 3 {
+				bh.mbyRemoveFromViolating(takeChildrenFrom)
+				tree.removeRootChild(takeChildrenFrom)
+			}
+
+			nodes := takeChildrenFrom.delink()
+			for _, n := range nodes {
+				bh.insertNodeIntoTree(tree, n)
+			}
+
+			bh.updateHighRank(tree, rank + 1)
+
+		} else {
+			bh.derankAndInsertRootChild(tree, tree, tree.childrenRank[rank])
+		}
 	}
 }
 

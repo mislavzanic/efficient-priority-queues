@@ -6,7 +6,7 @@ import (
 
 type node struct {
 	value float64
-	rank  uint
+	rank  int
 
 	self          *list.Element
 	violatingSelf *list.Element
@@ -14,7 +14,7 @@ type node struct {
 	parent *node
 
 	children      *list.List
-	numOfChildren []uint
+	numOfChildren []int
 
 	vList *list.List
 	wList *list.List
@@ -61,7 +61,7 @@ func (node *node) isGood() bool {
 	return node.value > node.parent.value
 }
 
-func (parent *node) removeChild(child *node) uint {
+func (parent *node) removeChild(child *node) int {
 	parent.children.Remove(child.self)
 	parent.numOfChildren[child.rank]--
 
@@ -70,8 +70,13 @@ func (parent *node) removeChild(child *node) uint {
 	return parent.numOfChildren[child.rank]
 }
 
-func (parent *node) removeFirstChild() (*node, uint) {
+func (parent *node) removeFirstChild() (*node, int) {
 	child := parent.children.Front().Value.(*node)
+
+	if parent.rank - 1 != child.rank {
+		panic("Incorrect ranks")
+	}
+
 	numOfChildren := parent.removeChild(child)
 	return child, numOfChildren
 }

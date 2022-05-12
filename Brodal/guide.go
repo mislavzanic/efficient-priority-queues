@@ -36,7 +36,13 @@ func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) [
 	ops := []action{}
 
 	if actualValue > guide.boundArray[index].fst {
-		guide.increase(index, nil)
+		// slucaj kad je x_i == upperBound -> prvo fixup x_i onda increase
+
+		if guide.boundArray[index].fst == guide.upperBound {
+			guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
+		}
+
+		guide.increase(index, &ops)
 
 		if guide.boundArray[index].fst == guide.upperBound-1 && (*guide.blocks[index]) != nil {
 			guide.fixUp(*guide.blocks[index], reduceValue, &ops)
@@ -96,7 +102,7 @@ func (guide *guide) expand(rank int) {
 	guide.blocks = append(guide.blocks, &ptr)
 }
 
-func (guide *guide) update(value int, rank uint) {
+func (guide *guide) update(value int, rank int) {
 	if value >= guide.upperBound-2 {
 		guide.boundArray[rank].fst = value
 	}

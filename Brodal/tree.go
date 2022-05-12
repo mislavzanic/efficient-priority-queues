@@ -27,7 +27,7 @@ const (
 const UPPER_BOUND int = 7
 const LOWER_BOUND int = -2
 
-func (tree *tree) RootRank() uint {
+func (tree *tree) RootRank() int {
 	return tree.root.rank
 }
 
@@ -63,8 +63,19 @@ func (tree *tree) addFirstRootChildren(child1 *node, child2 *node) {
 	tree.lowerBoundGuide.expand(int(tree.RootRank()))
 }
 
-func (tree *tree) removeRootChild(child *node) {
+func (tree *tree) removeRootChild(child *node) *node {
+
+	if child == tree.childrenRank[child.rank] {
+		if child.rightBrother().rank == child.rank {
+			tree.childrenRank[child.rank] = child.rightBrother()
+		} else {
+			tree.childrenRank[child.rank] = nil
+		}
+	}
+
 	tree.root.removeChild(child)
+
+	return child
 }
 
 func (tree *tree) delink() []*node {
@@ -93,7 +104,7 @@ func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) []action 
 }
 
 
-func (tree *tree) link(rank uint) {
+func (tree *tree) link(rank int) {
 	nodeX := tree.childrenRank[rank]
 	nodeY, nodeZ := nodeX.rightBrother(), nodeX.rightBrother().rightBrother()
 
