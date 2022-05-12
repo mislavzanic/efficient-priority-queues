@@ -1,4 +1,4 @@
-package Brodal
+package main
 
 type PriorityQueue interface {
 	Meld(PriorityQueue)

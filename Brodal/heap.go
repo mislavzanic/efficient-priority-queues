@@ -11,27 +11,12 @@ type BrodalHeap struct {
 	t1GuideW        *guide
 }
 
-type violationSetType byte
-
-const (
-	wSet  violationSetType = 0
-	vSet                   = 1
-	notViolation           = 2
-)
-
 const ALPHA int = 10
 
 func NewHeap(value float64) *BrodalHeap {
 	return &BrodalHeap{
 		tree1: newTree(value, 1),
 		tree2: nil,
-	}
-}
-
-func HeapFrom2Trees(tree1 *tree, tree2 *tree) *BrodalHeap {
-	return &BrodalHeap{
-		tree1: tree1,
-		tree2: tree2,
 	}
 }
 
@@ -116,6 +101,8 @@ func (bh *BrodalHeap) DeleteMin() {
 			e = e.Next()
 		}
 	}
+
+	// nekak napraviti update guide-a za W
 }
 
 func (bh *BrodalHeap) Insert(value float64) {
@@ -183,29 +170,19 @@ func (bh *BrodalHeap) removeFromViolating(notBad *node) {
 	notBad.removeSelfFromViolating()
 }
 
-func (bh *BrodalHeap) mbyAddViolation(mbyBad *node) violationSetType {
-	if !mbyBad.isGood() && mbyBad.violatingSelf == nil { return bh.addViolation(mbyBad) }
-	return notViolation
+func (bh *BrodalHeap) mbyAddViolation(mbyBad *node) {
+	if !mbyBad.isGood() && mbyBad.violatingSelf == nil {
+		bh.addViolation(mbyBad)
+	}
 }
 
-func (bh *BrodalHeap) addViolation(bad *node) violationSetType {
+func (bh *BrodalHeap) addViolation(bad *node) {
 	if bad.rank > bh.tree1.RootRank() {
 		bad.violatingSelf = bh.tree1.root.vList.PushFront(bad)
 		bh.updateVSet(bad)
-		return vSet
-	}
-
-	if bh.t1GuideW.boundArray[bad.rank].fst != 0 {
-		bad.violatingSelf = bh.tree1.root.wList.InsertAfter(bad, bh.rankPointersT1W[bad.rank].violatingSelf)
 	} else {
-		bad.violatingSelf = bh.tree1.root.wList.PushFront(bad)
-		bh.rankPointersT1W[bad.rank] = bad
+		bh.updateWSet(bad)
 	}
-
-	bh.numOfNodesInT1W[bad.rank]++
-	bh.updateWSet(bad)
-
-	return wSet
 }
 
 func (bh *BrodalHeap) updateWSet(bad *node) {
@@ -213,7 +190,18 @@ func (bh *BrodalHeap) updateWSet(bad *node) {
 	acts := bh.t1GuideW.forceIncrease(bad.rank, bh.numOfNodesInT1W[bad.rank], 2)
 
 	for _, act := range acts {
-		bh.handleWViolations(act)
+		if act.op == Increase {
+			if bh.t1GuideW.boundArray[bad.rank].fst != 0 {
+				bad.violatingSelf = bh.tree1.root.wList.InsertAfter(bad, bh.rankPointersT1W[bad.rank].violatingSelf)
+			} else {
+				bad.violatingSelf = bh.tree1.root.wList.PushFront(bad)
+				bh.rankPointersT1W[bad.rank] = bad
+			}
+
+			bh.numOfNodesInT1W[bad.rank]++
+		} else {
+			bh.reduceWViolations(act)
+		}
 	}
 }
 
@@ -235,7 +223,7 @@ func (bh *BrodalHeap) updateVSet(bad *node) {
 	}
 }
 
-func (bh *BrodalHeap) handleWViolations(act action) {
+func (bh *BrodalHeap) reduceWViolations(act action) {
 	numOfSonsOfT2 := 0
 	notSonsOfT2 := []*node{}
 
