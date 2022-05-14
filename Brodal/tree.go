@@ -95,12 +95,12 @@ func (tree *tree) incRank(node1 *node, node2 *node) {
 
 func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) []action {
 	if increase {
-		return tree.upperBoundGuide.forceIncrease(rank, numOfChildren, 3)
+		return tree.upperBoundGuide.forceIncrease(rank, numOfChildren + 1, 3)
 	}
 
 	reduceVal := 2
 	if tree.childrenRank[rank + 1].numOfChildren[rank] == 3 {reduceVal = 3}
-	return tree.lowerBoundGuide.forceIncrease(rank, numOfChildren, reduceVal)
+	return tree.lowerBoundGuide.forceIncrease(rank, -numOfChildren + 1, reduceVal)
 }
 
 

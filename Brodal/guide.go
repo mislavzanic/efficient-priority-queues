@@ -36,13 +36,15 @@ func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) [
 	ops := []action{}
 
 	if actualValue > guide.boundArray[index].fst {
-		// slucaj kad je x_i == upperBound -> prvo fixup x_i onda increase
 
+		// slucaj kad je x_i == upperBound -> prvo fixup x_i onda increase
 		if guide.boundArray[index].fst == guide.upperBound {
 			guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
 		}
 
 		guide.increase(index, &ops)
+
+		// if actualValue - reduceValue + 1 <= guide.upperBound - 2 { return ops }
 
 		if guide.boundArray[index].fst == guide.upperBound-1 && (*guide.blocks[index]) != nil {
 			guide.fixUp(*guide.blocks[index], reduceValue, &ops)
@@ -61,18 +63,20 @@ func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) [
 
 func (guide *guide) fixUp(pair *pair, reduceValue int, ops *[]action) {
 	guide.reduce(pair.snd, reduceValue, ops)
-	guide.increase(pair.snd+1, nil)
-
 	(*guide.blocks[pair.snd]) = nil
 
-	if guide.boundArray[pair.snd+1].fst == guide.upperBound-1 {
-		if (*guide.blocks[pair.snd+1]) != nil {
-			guide.blocks[pair.snd] = guide.blocks[pair.snd+1]
+	if pair.snd != len(guide.boundArray) - 1{
+		guide.increase(pair.snd+1, nil)
+
+		if guide.boundArray[pair.snd+1].fst == guide.upperBound-1 {
+			if (*guide.blocks[pair.snd+1]) != nil {
+				guide.blocks[pair.snd] = guide.blocks[pair.snd+1]
+			}
+		} else if guide.boundArray[pair.snd+1].fst == guide.upperBound {
+			ptr := &guide.boundArray[pair.snd+1]
+			guide.blocks[pair.snd+1] = &ptr
+			guide.blocks[pair.snd] = &ptr
 		}
-	} else if guide.boundArray[pair.snd+1].fst == guide.upperBound {
-		ptr := &guide.boundArray[pair.snd+1]
-		guide.blocks[pair.snd+1] = &ptr
-		guide.blocks[pair.snd] = &ptr
 	}
 }
 
@@ -93,7 +97,12 @@ func (guide *guide) reduce(index int, reduceValue int, ops *[]action) {
 	}
 
 	guide.boundArray[index].fst -= reduceValue
-	guide.boundArray[index+1].fst++
+	// if guide.boundArray[index].fst < guide.upperBound - 2 {
+	// 	guide.boundArray[index].fst = guide.upperBound - 2
+	// }
+	if index + 1 < len(guide.boundArray) {
+		guide.boundArray[index+1].fst++
+	}
 }
 
 func (guide *guide) expand(rank int) {
@@ -102,8 +111,8 @@ func (guide *guide) expand(rank int) {
 	guide.blocks = append(guide.blocks, &ptr)
 }
 
-func (guide *guide) update(value int, rank int) {
-	if value >= guide.upperBound-2 {
-		guide.boundArray[rank].fst = value
-	}
-}
+// func (guide *guide) update(value int, rank int) {
+// 	if value >= guide.upperBound-2 {
+// 		guide.boundArray[rank].fst = value
+// 	}
+// }

@@ -309,7 +309,7 @@ func (bh *BrodalHeap) derankAndInsertRootChild(removeRoot *tree, insertRoot *tre
 }
 
 func (bh *BrodalHeap) updateLowRank(tree *tree, node *node, insert bool) {
-	response := tree.askGuide(node.rank, tree.root.numOfChildren[node.rank] + 1, insert)
+	response := tree.askGuide(node.rank, tree.root.numOfChildren[node.rank], insert)
 
 	for _, act := range response {
 		if insert {
