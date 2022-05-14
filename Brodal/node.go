@@ -87,6 +87,8 @@ func (parent *node) addFirstChildren(child1 *node, child2 *node) {
 
 	if len(parent.numOfChildren) == int(child1.rank) {
 		parent.numOfChildren = append(parent.numOfChildren, 1)
+	} else {
+		parent.numOfChildren[child1.rank] += 1
 	}
 
 	parent.rank++
@@ -122,7 +124,11 @@ func (this *node) swapBrothers(other *node) {
 }
 
 func (parent *node) mbyUpdateRank() {
-	parent.rank = parent.children.Front().Value.(*node).rank + 1
+	if parent.children.Len() == 0 {
+		parent.rank = 0
+	} else {
+		parent.rank = parent.children.Front().Value.(*node).rank + 1
+	}
 }
 
 func (parent *node) incRank() {
