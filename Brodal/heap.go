@@ -103,6 +103,7 @@ func (bh *BrodalHeap) DeleteMin() {
 	}
 
 	// nekak napraviti update guide-a za W
+	// provjeriti jeli ovo bitno, il se radi vec gore automatski
 }
 
 func (bh *BrodalHeap) Insert(value float64) {
@@ -187,7 +188,7 @@ func (bh *BrodalHeap) addViolation(bad *node) {
 
 func (bh *BrodalHeap) updateWSet(bad *node) {
 
-	acts := bh.t1GuideW.forceIncrease(bad.rank, bh.numOfNodesInT1W[bad.rank], 2)
+	acts := bh.t1GuideW.forceIncrease(bad.rank, bh.numOfNodesInT1W[bad.rank] + 1, 2)
 
 	for _, act := range acts {
 		if act.op == Increase {
@@ -308,7 +309,7 @@ func (bh *BrodalHeap) derankAndInsertRootChild(removeRoot *tree, insertRoot *tre
 }
 
 func (bh *BrodalHeap) updateLowRank(tree *tree, node *node, insert bool) {
-	response := tree.askGuide(node.rank, tree.root.numOfChildren[node.rank], insert)
+	response := tree.askGuide(node.rank, tree.root.numOfChildren[node.rank] + 1, insert)
 
 	for _, act := range response {
 		if insert {
@@ -323,7 +324,7 @@ func (bh *BrodalHeap) updateLowRank(tree *tree, node *node, insert bool) {
 				bh.mbyRemoveFromViolating(node)
 				tree.removeRootChild(node)
 			} else {
-				bh.derankAndInsertRootChild(tree, tree, tree.childrenRank[act.index])
+				bh.derankAndInsertRootChild(tree, tree, tree.childrenRank[act.index + 1])
 			}
 		}
 	}

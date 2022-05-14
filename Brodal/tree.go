@@ -99,7 +99,7 @@ func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) []action 
 	}
 
 	reduceVal := 2
-	if tree.childrenRank[rank].leftBrother().numOfChildren[rank] == 3 {reduceVal = 3}
+	if tree.childrenRank[rank + 1].numOfChildren[rank] == 3 {reduceVal = 3}
 	return tree.lowerBoundGuide.forceIncrease(rank, numOfChildren, reduceVal)
 }
 
