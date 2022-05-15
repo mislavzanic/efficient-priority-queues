@@ -99,4 +99,20 @@ func TestRemoveChildren(t *testing.T) {
 func TestLink(t *testing.T) {
 	testNode := newNode(1)
 	testNode.link(newNode(2), newNode(3))
+
+	testNode2 := newNode(100)
+	testNode2.link(newNode(200), newNode(300))
+
+	testNode3 := newNode(123)
+	testNode3.link(newNode(1000), newNode(2000))
+
+	testNode.link(testNode2, testNode3)
+
+	if testNode.numOfChildren[0] != 2 {
+		t.Error(fmt.Sprintf("Test node numOfChildren[0] is %d, not 2", testNode.numOfChildren[0]))
+	}
+
+	if testNode.numOfChildren[1] != 2 {
+		t.Error(fmt.Sprintf("Test node numOfChildren[0] is %d, not 2", testNode.numOfChildren[1]))
+	}
 }
