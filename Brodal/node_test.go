@@ -7,7 +7,8 @@ import (
 
 func TestInsertOfFirstChildren(t *testing.T) {
 	testNode := newNode(1)
-	testNode.addFirstChildren(newNode(2), newNode(3))
+	testNode.link(newNode(2), newNode(3))
+	// testNode.addFirstChildren(newNode(2), newNode(3))
 
 	if testNode.value != 1 {
 		t.Error(fmt.Sprintf("Test node value is %f", testNode.value))
@@ -47,7 +48,7 @@ func TestInsertOfFirstChildren(t *testing.T) {
 
 func TestRemoveChildren(t *testing.T) {
 	testNode := newNode(1)
-	testNode.addFirstChildren(newNode(2), newNode(3))
+	testNode.link(newNode(2), newNode(3))
 	testNode.addBrother(newNode(5), testNode.leftSon())
 
 	testNode.removeChild(testNode.leftSon())
@@ -84,7 +85,7 @@ func TestRemoveChildren(t *testing.T) {
 		t.Error(fmt.Sprintf("Test node numOfChildren[0] is %d, not 0", testNode.numOfChildren[0]))
 	}
 
-	testNode.addFirstChildren(newNode(2), newNode(3))
+	testNode.link(newNode(2), newNode(3))
 
 	if testNode.numOfChildren[0] != 2 {
 		t.Error(fmt.Sprintf("Test node numOfChildren[0] is %d, not 2", testNode.numOfChildren[0]))
@@ -96,5 +97,6 @@ func TestRemoveChildren(t *testing.T) {
 }
 
 func TestLink(t *testing.T) {
-
+	testNode := newNode(1)
+	testNode.link(newNode(2), newNode(3))
 }

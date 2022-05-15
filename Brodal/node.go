@@ -34,6 +34,9 @@ func newNode(value float64) *node {
 }
 
 func (parent *node) leftSon() *node {
+	if parent.children == nil || parent.children.Len() == 0 {
+		return nil
+	}
 	return parent.children.Front().Value.(*node)
 }
 
@@ -91,7 +94,8 @@ func (parent *node) addFirstChildren(child1 *node, child2 *node) {
 		parent.numOfChildren[child1.rank] += 1
 	}
 
-	parent.rank++
+	parent.mbyUpdateRank()
+	// parent.rank++
 	parent.addBrother(child2, child1)
 }
 
@@ -104,9 +108,12 @@ func (parent *node) addBrother(child *node, newLeftBrother *node) {
 		child.parent.removeChild(child)
 	}
 
-
 	child.parent = parent
-	child.self = parent.children.InsertAfter(child, newLeftBrother.self)
+	if newLeftBrother == nil {
+		child.self = parent.children.PushBack(child)
+	} else {
+		child.self = parent.children.InsertAfter(child, newLeftBrother.self)
+	}
 
 	parent.numOfChildren[child.rank]++
 }
@@ -132,10 +139,10 @@ func (parent *node) mbyUpdateRank() {
 }
 
 func (parent *node) incRank() {
-	if len(parent.numOfChildren) != int(parent.rank) {
+	parent.rank++
+	if len(parent.numOfChildren) < int(parent.rank) {
 		parent.numOfChildren = append(parent.numOfChildren, 0)
 	}
-	parent.rank++
 }
 
 func (node *node) link(xNode *node, yNode *node) {
@@ -149,7 +156,10 @@ func (node *node) link(xNode *node, yNode *node) {
 	node.addBrother(yNode, node.leftSon())
 	node.mbyUpdateRank()
 
-	node.parent.numOfChildren[node.rank]++
+	if node.parent != nil {
+		node.parent.numOfChildren[node.rank]++
+		node.parent.numOfChildren[node.rank - 1]--
+	}
 }
 
 func (parent *node) delink() []*node {
