@@ -35,7 +35,6 @@ func TestGuide(t *testing.T) {
 		&ptr1, &ptr1, &ptr1, &ptr1,
 	}
 
-	// fmt.Println(guide.blockToString())
 	if guide.ToString() != "0,1,1,1,2,0,1,1,2," {
 		t.Error(fmt.Sprintf("Guide repr: %s", guide.ToString()))
 	}
@@ -57,4 +56,15 @@ func TestGuide(t *testing.T) {
 	if guide.ToString() != "0,1,1,1,1,1,1,1,0," {
 		t.Error(fmt.Sprintf("Guide repr: %s", guide.ToString()))
 	}
+
+	guide.forceIncrease(5, 3, 2)
+	if guide.ToString() != "0,1,1,1,1,0,2,1,0," {
+		t.Error(fmt.Sprintf("Guide repr: %s", guide.ToString()))
+	}
+
+	guide.forceIncrease(4, 3, 2)
+	if guide.ToString() != "0,1,1,1,0,1,2,1,0," {
+		t.Error(fmt.Sprintf("Guide repr: %s", guide.ToString()))
+	}
+	fmt.Println(guide.blockToString())
 }
