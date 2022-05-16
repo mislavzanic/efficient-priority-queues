@@ -167,8 +167,8 @@ func (node *node) link(xNode *node, yNode *node) {
 	}
 
 	node.incRank()
-	node.addBrother(xNode, node.leftSon(), false)
-	node.addBrother(yNode, node.leftSon(), true)
+	node.pushFrontChild(xNode, node.leftSon())
+	node.pushBackChild(yNode, node.leftSon())
 	node.mbyUpdateRank()
 
 	if node.parent != nil {

@@ -115,6 +115,9 @@ func (tree *tree) link(rank int) {
 	minNode, nodeX, nodeY := getMinNodeFrom3(nodeX, nodeY, nodeZ)
 
 	minNode.link(nodeX, nodeY)
+
+	tree.upperBoundGuide.expand(int(tree.RootRank()))
+	tree.lowerBoundGuide.expand(int(tree.RootRank()))
 }
 
 func newTree(value float64, treeIndex uint) *tree {

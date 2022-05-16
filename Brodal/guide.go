@@ -109,9 +109,11 @@ func (guide *guide) reduce(index int, reduceValue int, ops *[]action) {
 }
 
 func (guide *guide) expand(rank int) {
-	guide.boundArray = append(guide.boundArray, pair{fst: UPPER_BOUND - 2, snd: rank - 1})
-	ptr := &guide.boundArray[rank - 1]
-	guide.blocks = append(guide.blocks, &ptr)
+	if rank > len(guide.boundArray) {
+		guide.boundArray = append(guide.boundArray, pair{fst: UPPER_BOUND - 2, snd: rank - 1})
+		ptr := &guide.boundArray[rank - 1]
+		guide.blocks = append(guide.blocks, &ptr)
+	}
 }
 
 func (guide *guide) ToString() string {
