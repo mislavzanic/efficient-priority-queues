@@ -32,7 +32,7 @@ func TestInsertOfFirstChildren(t *testing.T) {
 		}
 	}
 
-	testNode.addBrother(newNode(5), testNode.leftSon())
+	testNode.addBrother(newNode(5), testNode.leftSon(), true)
 	if testNode.leftSon().value != 2 {
 		t.Error(fmt.Sprintf("First child value is %f", testNode.leftSon().value))
 	}
@@ -49,7 +49,7 @@ func TestInsertOfFirstChildren(t *testing.T) {
 func TestRemoveChildren(t *testing.T) {
 	testNode := newNode(1)
 	testNode.link(newNode(2), newNode(3))
-	testNode.addBrother(newNode(5), testNode.leftSon())
+	testNode.addBrother(newNode(5), testNode.leftSon(), true)
 
 	testNode.removeChild(testNode.leftSon())
 
@@ -114,5 +114,38 @@ func TestLink(t *testing.T) {
 
 	if testNode.numOfChildren[1] != 2 {
 		t.Error(fmt.Sprintf("Test node numOfChildren[0] is %d, not 2", testNode.numOfChildren[1]))
+	}
+
+	if testNode.leftSon().rank != 1 {
+		t.Error(fmt.Sprintf("First child rank is %d, not 1", testNode.leftSon().rank))
+	}
+
+	if testNode.rank != 2 {
+		t.Error(fmt.Sprintf("Test node rank is %d, not 2", testNode.rank))
+	}
+}
+
+func TestDelink(t *testing.T) {
+	testNode := newNode(1)
+	testNode.link(newNode(2), newNode(3))
+
+	testNode2 := newNode(100)
+	testNode2.link(newNode(200), newNode(300))
+
+	testNode3 := newNode(123)
+	testNode3.link(newNode(1000), newNode(2000))
+
+	testNode.link(testNode2, testNode3)
+
+	nodes := testNode.delink()
+
+	if testNode.rank != 1 {
+		t.Error(fmt.Sprintf("Test node rank is %d, not 1", testNode.rank))
+	}
+
+	for _, n := range nodes {
+		if n.rank != 1 {
+			t.Error(fmt.Sprintf("node rank is %d, not 1", n.rank))
+		}
 	}
 }

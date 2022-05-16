@@ -49,7 +49,7 @@ func (tree *tree) LeftmostSon() *node {
 }
 
 func (tree *tree) addRootChild(child *node) {
-	tree.root.addBrother(child, tree.childrenRank[child.rank])
+	tree.root.pushBackChild(child, tree.childrenRank[child.rank])
 }
 
 func (tree *tree) addFirstRootChildren(child1 *node, child2 *node) {
