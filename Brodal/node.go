@@ -147,6 +147,9 @@ func (parent *node) mbyUpdateRank() {
 		parent.rank = 0
 	} else {
 		parent.rank = parent.children.Front().Value.(*node).rank + 1
+		if parent.rank > len(parent.numOfChildren) {
+			parent.numOfChildren = append(parent.numOfChildren, 0)
+		}
 	}
 }
 
@@ -169,6 +172,7 @@ func (node *node) link(xNode *node, yNode *node) {
 	node.mbyUpdateRank()
 
 	if node.parent != nil {
+		node.parent.mbyUpdateRank()
 		node.parent.numOfChildren[node.rank]++
 		node.parent.numOfChildren[node.rank - 1]--
 	}

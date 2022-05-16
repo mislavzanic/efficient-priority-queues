@@ -7,14 +7,10 @@ type tree struct {
 
 	id uint
 
-	// rankPointersW []*node
 	childrenRank  []*node
-
-	// numOfNodesInW []uint
 
 	upperBoundGuide *guide
 	lowerBoundGuide *guide
-	// mainTreeGuideW  *guide
 }
 
 type reduceType byte
@@ -52,12 +48,14 @@ func (tree *tree) addRootChild(child *node) {
 	tree.root.pushBackChild(child, tree.childrenRank[child.rank])
 }
 
-func (tree *tree) addFirstRootChildren(child1 *node, child2 *node) {
+func (tree *tree) linkToRoot(child1 *node, child2 *node) {
 	if len(tree.childrenRank) == int(child1.rank) {
 		tree.childrenRank = append(tree.childrenRank, child1)
+	} else {
+		tree.childrenRank[child1.rank] = child1
 	}
 
-	tree.root.addFirstChildren(child1, child2)
+	tree.root.link(child1, child2)
 
 	tree.upperBoundGuide.expand(int(tree.RootRank()))
 	tree.lowerBoundGuide.expand(int(tree.RootRank()))
