@@ -49,6 +49,9 @@ func mbySwapTree(ptr1 *tree, ptr2 *tree, cond bool) (*tree, *tree) {
 }
 
 func getMinNode(xNode *node, yNode *node) (*node, *node) {
+	if xNode == nil { return yNode, xNode }
+	if yNode == nil { return xNode, yNode }
+
 	if xNode.value < yNode.value {
 		return xNode, yNode
 	}

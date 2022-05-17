@@ -49,10 +49,12 @@ func (this *node) rightBrother() *node {
 }
 
 func (this *node) getMinFromW() *node {
+	if this.wList.Len() == 0 { return nil }
 	return getMinFromList(this.wList).Value.(*node)
 }
 
 func (this *node) getMinFromV() *node {
+	if this.vList.Len() == 0 { return nil }
 	return getMinFromList(this.vList).Value.(*node)
 }
 
@@ -66,6 +68,7 @@ func (node *node) isGood() bool {
 
 func (parent *node) removeChild(child *node) int {
 	parent.children.Remove(child.self)
+	child.parent = nil
 	parent.numOfChildren[child.rank]--
 
 	parent.mbyUpdateRank()
