@@ -3,12 +3,9 @@ package Brodal
 import "container/list"
 
 type tree struct {
-	root *node
-
-	id uint
-
-	childrenRank  []*node
-
+	root            *node
+	id              uint
+	childrenRank    []*node
 	upperBoundGuide *guide
 	lowerBoundGuide *guide
 }
@@ -93,14 +90,15 @@ func (tree *tree) incRank(node1 *node, node2 *node) {
 
 func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) []action {
 	if increase {
-		return tree.upperBoundGuide.forceIncrease(rank, numOfChildren + 1, 3)
+		return tree.upperBoundGuide.forceIncrease(rank, numOfChildren+1, 3)
 	}
 
 	reduceVal := 2
-	if tree.childrenRank[rank + 1].numOfChildren[rank] == 3 {reduceVal = 3}
-	return tree.lowerBoundGuide.forceIncrease(rank, -numOfChildren + 1, reduceVal)
+	if tree.childrenRank[rank+1].numOfChildren[rank] == 3 {
+		reduceVal = 3
+	}
+	return tree.lowerBoundGuide.forceIncrease(rank, -numOfChildren+1, reduceVal)
 }
-
 
 func (tree *tree) link(rank int) {
 	nodeX := tree.childrenRank[rank]

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestNewTree(t *testing.T) {
+func TestTree(t *testing.T) {
 	root := newTree(1, 1)
 	root.linkToRoot(newNode(2), newNode(3))
 
@@ -13,13 +13,13 @@ func TestNewTree(t *testing.T) {
 		t.Error(fmt.Sprintf("Tree rank is %d, not 1", root.RootRank()))
 	}
 
-	if root.childrenRank[root.RootRank() - 1].value != 2 {
-		t.Error(fmt.Sprintf("Tree first child value is %f, not 2", root.childrenRank[root.RootRank() - 1].value))
+	if root.childrenRank[root.RootRank()-1].value != 2 {
+		t.Error(fmt.Sprintf("Tree first child value is %f, not 2", root.childrenRank[root.RootRank()-1].value))
 	}
 
 	root.addRootChild(newNode(5))
-	if root.childrenRank[root.RootRank() - 1].rightBrother().value != 5 {
-		t.Error(fmt.Sprintf("Tree new child value is %f, not 5", root.childrenRank[root.RootRank() - 1].rightBrother().value))
+	if root.childrenRank[root.RootRank()-1].rightBrother().value != 5 {
+		t.Error(fmt.Sprintf("Tree new child value is %f, not 5", root.childrenRank[root.RootRank()-1].rightBrother().value))
 	}
 	root.addRootChild(newNode(6))
 	root.addRootChild(newNode(7))
@@ -41,7 +41,6 @@ func TestNewTree(t *testing.T) {
 	node3 := newNode(300)
 	node3.link(newNode(300), newNode(300))
 	node1.link(node4, node3)
-
 
 	node2 := newNode(100)
 	node2.link(newNode(100), newNode(100))

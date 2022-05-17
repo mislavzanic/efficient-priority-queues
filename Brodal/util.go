@@ -3,7 +3,7 @@ package Brodal
 import "container/list"
 
 
-func getMinTree(tree1 *tree, tree2 *tree) (*tree, *tree) {
+func getMinValTree(tree1 *tree, tree2 *tree) (*tree, *tree) {
 	if tree1 == nil || tree2 == nil {
 		panic("One of the trees is nil")
 	}
@@ -36,7 +36,7 @@ func getMaxTree(trees []*tree) (*tree, []*tree) {
 		}
 	}
 
-	return maxTree, append(newTrees[:maxTreeIndex],  newTrees[maxTreeIndex:]...)
+	return maxTree, append(newTrees[:maxTreeIndex],  newTrees[maxTreeIndex+1:]...)
 }
 
 func mbySwapTree(ptr1 *tree, ptr2 *tree, cond bool) (*tree, *tree) {

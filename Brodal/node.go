@@ -76,7 +76,7 @@ func (parent *node) removeChild(child *node) int {
 func (parent *node) removeFirstChild() (*node, int) {
 	child := parent.children.Front().Value.(*node)
 
-	if parent.rank - 1 != child.rank {
+	if parent.rank-1 != child.rank {
 		panic("Incorrect ranks")
 	}
 
@@ -174,7 +174,7 @@ func (node *node) link(xNode *node, yNode *node) {
 	if node.parent != nil {
 		node.parent.mbyUpdateRank()
 		node.parent.numOfChildren[node.rank]++
-		node.parent.numOfChildren[node.rank - 1]--
+		node.parent.numOfChildren[node.rank-1]--
 	}
 }
 

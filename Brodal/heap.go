@@ -1,6 +1,8 @@
 package Brodal
 
-import "math"
+import (
+	"math"
+)
 
 type BrodalHeap struct {
 	tree1 *tree
@@ -116,11 +118,10 @@ func (bh *BrodalHeap) Meld(other *BrodalHeap) {
 
 	if bh.tree1.root.rank == 0 && bh.tree2 == nil {
 		if other.tree1.root.rank == 0 && other.tree2 == nil {
-			bh.tree1, other.tree1 = mbySwapTree(bh.tree1, other.tree1, bh.Min() < other.Min())
-			bh.tree2 = other.tree2
+			bh.tree1, bh.tree2 = getMinValTree(bh.tree1, other.tree1)
 		}
 	} else {
-		minTree, _ := getMinTree(bh.tree1, other.tree1)
+		minTree, _ := getMinValTree(bh.tree1, other.tree1)
 		maxTree, others := getMaxTree(trees)
 
 		if minTree.RootRank() == maxTree.RootRank() {
