@@ -61,8 +61,12 @@ func (tree *tree) linkToRoot(child1 *node, child2 *node) {
 func (tree *tree) removeRootChild(child *node) *node {
 
 	if child == tree.childrenRank[child.rank] {
-		if child.rightBrother().rank == child.rank {
-			tree.childrenRank[child.rank] = child.rightBrother()
+		if tree.root.children.Len() > 1 {
+			if tree.root.children.Back().Value.(*node) != child {
+				if child.rightBrother().rank == child.rank {
+					tree.childrenRank[child.rank] = child.rightBrother()
+				}
+			}
 		} else {
 			tree.childrenRank[child.rank] = nil
 		}
@@ -83,7 +87,7 @@ func (tree *tree) incRank(node1 *node, node2 *node) {
 	}
 
 	tree.root.link(node1, node2)
-	tree.childrenRank = append(tree.childrenRank, node2)
+	tree.childrenRank = append(tree.childrenRank, node1)
 	tree.upperBoundGuide.expand(int(tree.RootRank()))
 	tree.lowerBoundGuide.expand(int(tree.RootRank()))
 }

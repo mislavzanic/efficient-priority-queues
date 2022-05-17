@@ -6,7 +6,7 @@ import (
 
 func checkMin(pq *BrodalHeap, expectedVal float64, t *testing.T) {
 	if pq.Min() != expectedVal {
-		t.Errorf("PQ min value is %f, not %f", pq.Min(), expectedVal)
+		t.Errorf("FAIL: PQ min value is %f, not %f", pq.Min(), expectedVal)
 	} else {
 		t.Logf("PQ min value is %f", pq.Min())
 	}
@@ -59,6 +59,8 @@ func TestHeap(t *testing.T) {
 
 	pq.Insert(3)
 
+	t.Logf("Tree1 left son has value %f", pq.tree1.LeftmostSon().value)
+
 	checkIfTreeIsNil(pq.tree2, 2, t)
 
 	if pq.tree1.RootRank() != 1 {
@@ -68,26 +70,42 @@ func TestHeap(t *testing.T) {
 	checkNumOfChildren(pq.tree1, 0, 2, t)
 
 	pq.Insert(3)
-	pq.Insert(3)
-	pq.Insert(3)
+	pq.Insert(100)
+	pq.Insert(4)
 
 	checkNumOfChildren(pq.tree1, 0, 5, t)
 
+	pq.Insert(-1)
+	pq.Insert(10000)
 	pq.Insert(3)
 	pq.Insert(3)
 
-	checkNumOfChildren(pq.tree1, 0, 7, t)
+	checkNumOfChildren(pq.tree2, 1, 2, t)
 
-	pq.Insert(3)
 
-	if pq.tree1.RootRank() != 2 {
-		t.Errorf("Tree1 rank is %d, not 2", pq.tree1.RootRank())
+	if pq.tree1.RootRank() != 0 {
+		t.Errorf("Tree1 rank is %d, not 0", pq.tree1.RootRank())
 	}
 
-	checkNumOfChildren(pq.tree1, 0, 2, t)
-	checkNumOfChildren(pq.tree1, 1, 2, t)
+	// checkNumOfChildren(pq.tree1, 0, 2, t)
+	// checkNumOfChildren(pq.tree1, 1, 2, t)
 
+	t.Log("DeleteMin...")
 	pq.DeleteMin()
 
+	checkMin(pq, 1, t)
+	checkNumOfChildren(pq.tree1, 1, 2, t)
+	t.Log("DeleteMin...")
+	pq.DeleteMin()
 	checkMin(pq, 2, t)
+	pq.DeleteMin()
+	checkMin(pq, 3, t)
+	pq.DeleteMin()
+	checkMin(pq, 3, t)
+	pq.Insert(5)
+	pq.Insert(-1)
+	pq.DeleteMin()
+	checkMin(pq, 3, t)
+	pq.DeleteMin()
+	checkMin(pq, 3, t)
 }

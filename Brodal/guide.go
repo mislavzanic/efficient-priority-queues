@@ -1,6 +1,7 @@
 package Brodal
 
 import (
+	"fmt"
 	"strconv"
 )
 
@@ -109,6 +110,9 @@ func (guide *guide) reduce(index int, reduceValue int, ops *[]action) {
 }
 
 func (guide *guide) expand(rank int) {
+	if len(guide.boundArray) < rank-1 {
+		panic(fmt.Sprintf("Incorrect values %d, %d", len(guide.boundArray), rank-1))
+	}
 	if rank > len(guide.boundArray) {
 		guide.boundArray = append(guide.boundArray, pair{fst: UPPER_BOUND - 2, snd: rank - 1})
 		ptr := &guide.boundArray[rank-1]

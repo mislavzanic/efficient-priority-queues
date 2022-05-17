@@ -184,9 +184,11 @@ func (node *node) link(xNode *node, yNode *node) {
 func (parent *node) delink() []*node {
 	node1, _ := parent.removeFirstChild()
 	node2, _ := parent.removeFirstChild()
-	if parent.numOfChildren[parent.rank-1] == 1 {
-		node3, _ := parent.removeFirstChild()
-		return []*node{node1, node2, node3}
+	if parent.rank > 0 {
+		if parent.numOfChildren[parent.rank-1] == 1 {
+			node3, _ := parent.removeFirstChild()
+			return []*node{node1, node2, node3}
+		}
 	}
 	return []*node{node1, node2}
 }

@@ -17,9 +17,20 @@ const ALPHA int = 10
 
 func NewHeap(value float64) *BrodalHeap {
 	return &BrodalHeap{
-		tree1: newTree(value, 1),
-		tree2: nil,
+		tree1:           newTree(value, 1),
+		tree2:           nil,
+		numOfNodesInT1W: []int{},
+		rankPointersT1W: []*node{},
+		t1GuideW:        newGuide(6),
 	}
+}
+
+func (bh *BrodalHeap) reset(newMin float64) {
+	bh.tree1 = newTree(newMin, 1)
+	bh.tree2 = nil
+	bh.numOfNodesInT1W = []int{}
+	bh.rankPointersT1W = []*node{}
+	bh.t1GuideW = newGuide(6)
 }
 
 func (bh *BrodalHeap) Min() float64 {
@@ -42,19 +53,25 @@ func (bh *BrodalHeap) Delete(node *node) {
 }
 
 func (bh *BrodalHeap) DeleteMin() {
-	if bh.tree1 == nil { return }
-	if bh.tree2 != nil {
-		child := bh.tree2.Children().Front()
-
-		for bh.tree2.Children().Len() != 0 {
-			bh.tree2.removeRootChild(child.Value.(*node))
-			bh.insertNodeIntoTree(bh.tree1, child.Value.(*node))
-			child = bh.tree2.Children().Front()
-		}
-
-		bh.insertNodeIntoTree(bh.tree1, bh.tree2.root)
-		bh.tree2 = nil
+	if bh.tree1 == nil {
+		return
 	}
+
+	if bh.tree2 != nil {
+		if bh.tree2.RootRank() == 0 && bh.tree1.RootRank() == 0 {
+			bh.reset(bh.tree2.root.value)
+			return
+		} else {
+			bh.moveT2ToT1()
+		}
+	} else {
+		if bh.tree1.RootRank() == 0 {
+			bh.reset(0)
+			bh.tree1 = nil
+			return
+		}
+	}
+
 
 	minW := bh.tree1.root.getMinFromW()
 	minV := bh.tree1.root.getMinFromV()
@@ -62,35 +79,39 @@ func (bh *BrodalHeap) DeleteMin() {
 	newMin, _, _ := getMinNodeFrom3(minW, minV, minTree)
 
 	mbySwap := bh.tree1.childrenRank[newMin.rank]
-	indepTrees := bh.tree1.rmRfRoot()
-
-	if newMin.parent != nil {
+	if newMin.parent != bh.tree1.root {
 		mbySwap.parent = newMin.parent
-		newMin.parent = nil
+		newMin.parent = bh.tree1.root
 
-		indepTrees.Remove(mbySwap.self)
+		temp := mbySwap.self
 		mbySwap.self = newMin.self
-		newMin.self = nil
+		newMin.self = temp
+		bh.tree1.childrenRank[newMin.rank] = newMin
 	}
 
+	bh.cutNodeFromTree(bh.tree1, newMin)
+
+	indepTrees := bh.tree1.rmRfRoot()
 	oldV, oldW := bh.tree1.root.vList, bh.tree1.root.wList
 
-	bh.tree1 = newTree(newMin.value, 1)
+	bh.reset(newMin.value)
 
-	for e := indepTrees.Back(); e != nil; e = e.Prev() {
+	for e := indepTrees.Back(); e != nil; {
 		if e.Value.(*node).rank == 0 {
 			bh.Insert(e.Value.(*node).value)
 		} else {
 			if e.Value.(*node).rank == bh.tree1.RootRank() {
-				bh.tree1.root.incRank()
-				bh.tree1.childrenRank = append(bh.tree1.childrenRank, nil)
-			}
-			if bh.tree1.root.numOfChildren[bh.tree1.RootRank() - 1] < 2 {
-				bh.tree1.addRootChild(e.Value.(*node))
+				bh.incTreeRank(bh.tree1, e.Value.(*node), e.Prev().Value.(*node))
+				e = e.Prev()
 			} else {
-				bh.insertNodeIntoTree(bh.tree1, e.Value.(*node))
+				if bh.tree1.root.numOfChildren[bh.tree1.RootRank()-1] < 2 {
+					bh.tree1.addRootChild(e.Value.(*node))
+				} else {
+					bh.insertNodeIntoTree(bh.tree1, e.Value.(*node))
+				}
 			}
 		}
+		e = e.Prev()
 	}
 
 	for e := newMin.children.Back(); e != nil; e = e.Prev() {
@@ -140,7 +161,7 @@ func (bh *BrodalHeap) Meld(other *BrodalHeap) {
 		}
 
 		if maxTree.RootRank() == 0 {
-			maxTree.linkToRoot(others[0].root, others[1].root)
+			bh.incTreeRank(maxTree, others[0].root, others[1].root)
 			if len(others) == 3 {
 				bh.insertNodeIntoTree(maxTree, others[2].root)
 			}
@@ -184,6 +205,9 @@ func (bh *BrodalHeap) removeFromViolating(notBad *node) {
 }
 
 func (bh *BrodalHeap) mbyAddViolation(mbyBad *node) {
+	if mbyBad.parent == nil {
+		return
+	}
 	if !mbyBad.isGood() && mbyBad.violatingSelf == nil {
 		bh.addViolation(mbyBad)
 	}
@@ -200,7 +224,7 @@ func (bh *BrodalHeap) addViolation(bad *node) {
 
 func (bh *BrodalHeap) updateWSet(bad *node) {
 
-	acts := bh.t1GuideW.forceIncrease(bad.rank, bh.numOfNodesInT1W[bad.rank] + 1, 2)
+	acts := bh.t1GuideW.forceIncrease(bad.rank, bh.numOfNodesInT1W[bad.rank]+1, 2)
 
 	for _, act := range acts {
 		if act.op == Increase {
@@ -219,11 +243,11 @@ func (bh *BrodalHeap) updateWSet(bad *node) {
 }
 
 func (bh *BrodalHeap) updateVSet(bad *node) {
-	if bh.tree1.root.vList.Len() > ALPHA * bh.tree1.RootRank() {
+	if bh.tree1.root.vList.Len() > ALPHA*bh.tree1.RootRank() {
 		if bh.tree2 == nil {
 			panic("This can't happen")
 		}
-		if bh.tree2.RootRank() <= bh.tree1.RootRank() + 1 {
+		if bh.tree2.RootRank() <= bh.tree1.RootRank()+1 {
 			for leftmostSon := bh.tree2.LeftmostSon(); leftmostSon.rank < bh.tree1.RootRank(); {
 				bh.cutNodeFromTree(bh.tree2, leftmostSon)
 				bh.insertNodeIntoTree(bh.tree1, leftmostSon)
@@ -231,7 +255,7 @@ func (bh *BrodalHeap) updateVSet(bad *node) {
 			bh.insertNodeIntoTree(bh.tree1, bh.tree2.root)
 			bh.tree2 = nil
 		} else {
-			bh.derankAndInsertRootChild(bh.tree2, bh.tree1, bh.tree2.childrenRank[bh.tree1.RootRank() + 1])
+			bh.derankAndInsertRootChild(bh.tree2, bh.tree1, bh.tree2.childrenRank[bh.tree1.RootRank()+1])
 		}
 	}
 }
@@ -268,15 +292,17 @@ func (bh *BrodalHeap) reduceWViolations(act action) {
 	} else {
 		bh.reduceViolation(notSonsOfT2[0], notSonsOfT2[1])
 
-		notGood := func () *node {
+		notGood := func() *node {
 			if !notSonsOfT2[0].isGood() {
 				return notSonsOfT2[0]
 			} else if !notSonsOfT2[1].isGood() {
 				return notSonsOfT2[1]
-			} else { return nil }
+			} else {
+				return nil
+			}
 		}()
 
-		if  notGood != nil {
+		if notGood != nil {
 			bh.removeViolatingNode(notGood, nil)
 		}
 	}
@@ -285,7 +311,7 @@ func (bh *BrodalHeap) reduceWViolations(act action) {
 }
 
 func (bh *BrodalHeap) insertNodeIntoTree(tree *tree, node *node) {
-	if node.rank < tree.RootRank() - 2 {
+	if node.rank < tree.RootRank()-2 {
 		bh.updateLowRank(tree, node, true)
 	} else {
 		tree.addRootChild(node)
@@ -296,7 +322,7 @@ func (bh *BrodalHeap) insertNodeIntoTree(tree *tree, node *node) {
 }
 
 func (bh *BrodalHeap) cutNodeFromTree(tree *tree, node *node) {
-	if node.rank < tree.RootRank() - 2 {
+	if node.rank < tree.RootRank()-2 {
 		bh.updateLowRank(tree, node, false)
 	} else {
 		bh.mbyRemoveFromViolating(node)
@@ -336,14 +362,16 @@ func (bh *BrodalHeap) updateLowRank(tree *tree, node *node, insert bool) {
 				bh.mbyRemoveFromViolating(node)
 				tree.removeRootChild(node)
 			} else {
-				bh.derankAndInsertRootChild(tree, tree, tree.childrenRank[act.index + 1])
+				bh.derankAndInsertRootChild(tree, tree, tree.childrenRank[act.index+1])
 			}
 		}
 	}
 }
 
 func (bh *BrodalHeap) updateHighRank(tree *tree, rank int) {
-	if rank < 0 { return }
+	if rank < 0 {
+		return
+	}
 	if tree.root.numOfChildren[rank] > 7 {
 		if rank == tree.root.rank-1 {
 			nodeSliceX := tree.root.delink()
@@ -365,11 +393,11 @@ func (bh *BrodalHeap) updateHighRank(tree *tree, rank int) {
 			minTree, tree1, tree2 := getMinNodeFrom3(tree1, tree2, tree3)
 			minTree.link(tree1, tree2)
 			bh.insertNodeIntoTree(tree, minTree)
-			bh.updateHighRank(tree, rank + 1)
+			bh.updateHighRank(tree, rank+1)
 		}
 	} else if tree.root.numOfChildren[rank] < 2 {
-		if rank == tree.RootRank() - 2 {
-			takeChildrenFrom := tree.childrenRank[rank + 1]
+		if rank == tree.RootRank()-2 {
+			takeChildrenFrom := tree.childrenRank[rank+1]
 
 			if takeChildrenFrom.numOfChildren[rank] <= 3 {
 				bh.mbyRemoveFromViolating(takeChildrenFrom)
@@ -381,7 +409,7 @@ func (bh *BrodalHeap) updateHighRank(tree *tree, rank int) {
 				bh.insertNodeIntoTree(tree, n)
 			}
 
-			bh.updateHighRank(tree, rank + 1)
+			bh.updateHighRank(tree, rank+1)
 
 		} else {
 			bh.derankAndInsertRootChild(tree, tree, tree.childrenRank[rank])
@@ -394,6 +422,7 @@ func (bh *BrodalHeap) incTreeRank(tree *tree, node1 *node, node2 *node) {
 	if tree.id == 1 {
 		bh.rankPointersT1W = append(bh.rankPointersT1W, nil)
 		bh.numOfNodesInT1W = append(bh.numOfNodesInT1W, 0)
+		bh.t1GuideW.expand(tree.RootRank() + 1)
 	}
 
 	tree.incRank(node1, node2)
@@ -423,7 +452,7 @@ func (bh *BrodalHeap) removeViolatingNode(rmNode *node, otherBrother *node) {
 	replacement := bh.tree1.childrenRank[parent.rank]
 	grandParent := parent.parent
 	if otherBrother == nil {
-		otherBrother = func () *node {
+		otherBrother = func() *node {
 			if rmNode.leftBrother().rank != rmNode.rank {
 				return rmNode.rightBrother()
 			} else {
@@ -459,4 +488,22 @@ func (bh *BrodalHeap) removeViolatingNode(rmNode *node, otherBrother *node) {
 		bh.insertNodeIntoTree(bh.tree1, rmNode)
 	}
 	bh.mbyRemoveFromViolating(rmNode)
+}
+
+func (bh *BrodalHeap) moveT2ToT1() {
+	child := bh.tree2.Children().Back()
+	for bh.tree2.Children().Len() != 0 {
+		bh.tree2.removeRootChild(child.Value.(*node))
+
+		if child.Value.(*node).rank == bh.tree1.RootRank() {
+			nextChild := bh.tree2.Children().Back().Value.(*node)
+			bh.tree2.removeRootChild(nextChild)
+			bh.incTreeRank(bh.tree1, child.Value.(*node), nextChild)
+		} else {
+			bh.insertNodeIntoTree(bh.tree1, child.Value.(*node))
+		}
+		child = bh.tree2.Children().Back()
+	}
+	bh.insertNodeIntoTree(bh.tree1, bh.tree2.root)
+	bh.tree2 = nil
 }
