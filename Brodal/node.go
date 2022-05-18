@@ -2,6 +2,7 @@ package Brodal
 
 import (
 	"container/list"
+	"fmt"
 )
 
 type node struct {
@@ -67,6 +68,9 @@ func (node *node) isGood() bool {
 }
 
 func (parent *node) removeChild(child *node) int {
+	if child.self == nil {
+		panic("nil je")
+	}
 	parent.children.Remove(child.self)
 	child.parent = nil
 	parent.numOfChildren[child.rank]--
@@ -121,7 +125,7 @@ func (parent *node) addBrother(child *node, newBrother *node, left bool) {
 
 	child.parent = parent
 	if newBrother == nil {
-		child.self = parent.children.PushBack(child)
+		child.self = parent.children.PushFront(child)
 	} else {
 		if left {
 			child.self = parent.children.InsertAfter(child, newBrother.self)
@@ -131,6 +135,7 @@ func (parent *node) addBrother(child *node, newBrother *node, left bool) {
 	}
 
 	parent.numOfChildren[child.rank]++
+	println(parent.numOfChildren[child.rank], child.rank)
 }
 
 func (this *node) swapBrothers(other *node) {
@@ -166,7 +171,7 @@ func (parent *node) incRank() {
 func (node *node) link(xNode *node, yNode *node) {
 
 	if node.rank != xNode.rank || node.rank != yNode.rank {
-		panic("Node ranks don't match")
+		panic(fmt.Sprintf("Node ranks don't match, %d, %d, %d", node.rank, xNode.rank, yNode.rank))
 	}
 
 	node.incRank()
@@ -184,6 +189,15 @@ func (node *node) link(xNode *node, yNode *node) {
 func (parent *node) delink() []*node {
 	node1, _ := parent.removeFirstChild()
 	node2, _ := parent.removeFirstChild()
+	if node1 == node2 {
+		println()
+		println(parent.numOfChildren[0])
+		for e := parent.children.Front(); e != nil; e = e.Next() {
+			println(e.Value.(*node).value)
+		}
+		println(node1.value)
+		panic(fmt.Sprintf("node1 i node2 su jednaki; %d rang n1, %d rang roditelja", node1.rank, parent.rank))
+	}
 	if parent.rank > 0 {
 		if parent.numOfChildren[parent.rank-1] == 1 {
 			node3, _ := parent.removeFirstChild()

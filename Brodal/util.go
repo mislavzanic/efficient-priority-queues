@@ -3,15 +3,15 @@ package Brodal
 import "container/list"
 
 
-func getMinValTree(tree1 *tree, tree2 *tree) (*tree, *tree) {
-	if tree1 == nil || tree2 == nil {
+func getMinValTree(t1s1 *tree1Struct, t1s2 *tree1Struct) (*tree1Struct, *tree1Struct) {
+	if t1s1 == nil || t1s2 == nil {
 		panic("One of the trees is nil")
 	}
 
-	if tree1.root.value > tree2.root.value {
-		return tree2, tree1
+	if t1s1.tree1.root.value > t1s2.tree1.root.value {
+		return t1s2, t1s1
 	} else {
-		return tree1, tree2
+		return t1s1, t1s2
 	}
 }
 

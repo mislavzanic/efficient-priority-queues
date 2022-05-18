@@ -54,8 +54,8 @@ func (tree *tree) linkToRoot(child1 *node, child2 *node) {
 
 	tree.root.link(child1, child2)
 
-	tree.upperBoundGuide.expand(int(tree.RootRank()))
-	tree.lowerBoundGuide.expand(int(tree.RootRank()))
+	tree.upperBoundGuide.expand(tree.RootRank() - 2)
+	tree.lowerBoundGuide.expand(tree.RootRank() - 2)
 }
 
 func (tree *tree) removeRootChild(child *node) *node {
@@ -78,7 +78,9 @@ func (tree *tree) removeRootChild(child *node) *node {
 }
 
 func (tree *tree) delink() []*node {
-	return tree.root.delink()
+	nodes := tree.root.delink()
+	tree.childrenRank[tree.RootRank() - 1] = tree.LeftmostSon()
+	return nodes
 }
 
 func (tree *tree) incRank(node1 *node, node2 *node) {
@@ -87,9 +89,12 @@ func (tree *tree) incRank(node1 *node, node2 *node) {
 	}
 
 	tree.root.link(node1, node2)
-	tree.childrenRank = append(tree.childrenRank, node1)
-	tree.upperBoundGuide.expand(int(tree.RootRank()))
-	tree.lowerBoundGuide.expand(int(tree.RootRank()))
+	if len(tree.childrenRank) == node1.rank {
+		tree.childrenRank = append(tree.childrenRank, nil)
+	}
+	tree.childrenRank[node1.rank] = node1
+	tree.upperBoundGuide.expand(tree.RootRank() - 2)
+	tree.lowerBoundGuide.expand(tree.RootRank() - 2)
 }
 
 func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) []action {
@@ -118,8 +123,12 @@ func (tree *tree) link(rank int) {
 
 	minNode.link(nodeX, nodeY)
 
-	tree.upperBoundGuide.expand(int(tree.RootRank()))
-	tree.lowerBoundGuide.expand(int(tree.RootRank()))
+	if minNode.rank == len(tree.childrenRank) {
+		tree.childrenRank = append(tree.childrenRank, minNode)
+	}
+
+	tree.upperBoundGuide.expand(tree.RootRank() - 2)
+	tree.lowerBoundGuide.expand(tree.RootRank() - 2)
 }
 
 func newTree(value float64, treeIndex uint) *tree {
