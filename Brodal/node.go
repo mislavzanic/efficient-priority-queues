@@ -6,7 +6,7 @@ import (
 )
 
 type node struct {
-	value float64
+	value valType
 	rank  int
 
 	self          *list.Element
@@ -23,7 +23,7 @@ type node struct {
 	parentViolatingList *list.List
 }
 
-func newNode(value float64) *node {
+func newNode(value valType) *node {
 	node := new(node)
 	node.value = value
 	node.rank = 0
@@ -64,59 +64,46 @@ func (this *node) getMinFromChildren() *node {
 }
 
 func (node *node) isGood() bool {
-	return node.value > node.parent.value
+	return node.value >= node.parent.value
 }
 
-func (parent *node) removeChild(child *node) int {
-	if child.self == nil {
-		panic("nil je")
-	}
+func (parent *node) removeChild(child *node) *node {
 	parent.children.Remove(child.self)
 	child.parent = nil
 	parent.numOfChildren[child.rank]--
 
 	parent.mbyUpdateRank()
 
-	return parent.numOfChildren[child.rank]
+	return child
 }
 
-func (parent *node) removeFirstChild() (*node, int) {
+func (parent *node) removeFirstChild() *node {
 	child := parent.children.Front().Value.(*node)
 
 	if parent.rank-1 != child.rank {
 		panic("Incorrect ranks")
 	}
 
-	numOfChildren := parent.removeChild(child)
-	return child, numOfChildren
+	return parent.removeChild(child)
 }
 
-func (parent *node) addFirstChildren(child1 *node, child2 *node) {
-	child1.self = parent.children.PushBack(child1)
-	child1.parent = parent
-
-	if len(parent.numOfChildren) == int(child1.rank) {
-		parent.numOfChildren = append(parent.numOfChildren, 1)
-	} else {
-		parent.numOfChildren[child1.rank] += 1
-	}
-
-	parent.mbyUpdateRank()
-	// parent.rank++
-	parent.addBrother(child2, child1, true)
+func (parent *node) pushBackChild(child *node, newBrother *node) bool {
+	return parent.addBrother(child, newBrother, true)
 }
 
-func (parent *node) pushBackChild(child *node, newBrother *node) {
-	parent.addBrother(child, newBrother, true)
+func (parent *node) pushFrontChild(child *node, newBrother *node) bool {
+	return parent.addBrother(child, newBrother, false)
 }
 
-func (parent *node) pushFrontChild(child *node, newBrother *node) {
-	parent.addBrother(child, newBrother, false)
-}
-
-func (parent *node) addBrother(child *node, newBrother *node, left bool) {
+func (parent *node) addBrother(child *node, newBrother *node, left bool) bool {
 	if parent.rank == child.rank {
 		panic("Increase rank of parent first")
+	}
+
+	if newBrother != nil {
+		if newBrother.parent != parent {
+			panic(fmt.Sprintf("newBrother parent is not the parent, %f, %f", parent.value, newBrother.parent.value))
+		}
 	}
 
 	if child.parent != nil {
@@ -135,7 +122,7 @@ func (parent *node) addBrother(child *node, newBrother *node, left bool) {
 	}
 
 	parent.numOfChildren[child.rank]++
-	println(parent.numOfChildren[child.rank], child.rank)
+	return parent.value > child.value
 }
 
 func (this *node) swapBrothers(other *node) {
@@ -187,20 +174,14 @@ func (node *node) link(xNode *node, yNode *node) {
 }
 
 func (parent *node) delink() []*node {
-	node1, _ := parent.removeFirstChild()
-	node2, _ := parent.removeFirstChild()
+	node1 := parent.removeFirstChild()
+	node2 := parent.removeFirstChild()
 	if node1 == node2 {
-		println()
-		println(parent.numOfChildren[0])
-		for e := parent.children.Front(); e != nil; e = e.Next() {
-			println(e.Value.(*node).value)
-		}
-		println(node1.value)
 		panic(fmt.Sprintf("node1 i node2 su jednaki; %d rang n1, %d rang roditelja", node1.rank, parent.rank))
 	}
 	if parent.rank > 0 {
 		if parent.numOfChildren[parent.rank-1] == 1 {
-			node3, _ := parent.removeFirstChild()
+			node3 := parent.removeFirstChild()
 			return []*node{node1, node2, node3}
 		}
 	}
@@ -208,6 +189,9 @@ func (parent *node) delink() []*node {
 }
 
 func (this *node) removeSelfFromViolating() {
-	this.parentViolatingList.Remove(this.violatingSelf)
-	this.parentViolatingList = nil
+	if this.violatingSelf != nil {
+		this.parentViolatingList.Remove(this.violatingSelf)
+		this.violatingSelf = nil
+		this.parentViolatingList = nil
+	}
 }

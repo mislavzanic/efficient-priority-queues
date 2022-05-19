@@ -21,6 +21,7 @@ type operation byte
 const (
 	Increase operation = 0
 	Reduce   operation = 1
+	Decrease operation = 2
 )
 
 type action struct {
@@ -40,7 +41,7 @@ func newGuide(upperBound int) *guide {
 func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) []action {
 	ops := []action{}
 
-	println("inguide", actualValue, guide.boundArray[index].fst)
+	// println("inguide", actualValue, guide.boundArray[index].fst)
 	if actualValue > guide.boundArray[index].fst {
 
 		// slucaj kad je x_i == upperBound -> prvo fixup x_i onda increase
@@ -50,10 +51,7 @@ func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) [
 
 		guide.increase(index, &ops)
 
-		// if actualValue - reduceValue + 1 <= guide.upperBound - 2 { return ops }
-
 		if guide.boundArray[index].fst == guide.upperBound-1 && (*guide.blocks[index]) != nil {
-			print("tusam")
 			guide.fixUp(*guide.blocks[index], reduceValue, &ops)
 		} else if guide.boundArray[index].fst == guide.upperBound {
 			if (*guide.blocks[index]) == nil {
@@ -63,11 +61,29 @@ func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) [
 				guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
 			}
 		}
+	} else {
+		// guide.increase(index, &ops)
+		ops = append(ops, action{index, Increase, 1})
 	}
 
 	println()
 	println(guide.blockToString())
 	println()
+	return ops
+}
+
+func (guide *guide) forceDecrease(index int, actualValue int, reduceValue int) []action {
+	ops := []action{}
+	if actualValue > guide.upperBound - 2 {
+		guide.decrease(index, nil)
+		if guide.boundArray[index].fst == guide.upperBound-1 {
+			(*guide.blocks[index]) = nil
+		} else {
+			if (*guide.blocks[index]) != nil {
+				guide.fixUp(*guide.blocks[index], reduceValue, &ops)
+			}
+		}
+	}
 	return ops
 }
 
@@ -98,6 +114,15 @@ func (guide *guide) increase(index int, ops *[]action) {
 	}
 }
 
+func (guide *guide) decrease(index int, ops *[]action) {
+	if index < len(guide.boundArray) {
+		guide.boundArray[index].fst--
+		if ops != nil {
+			*ops = append(*ops, action{index, Decrease, 1})
+		}
+	}
+}
+
 func (guide *guide) reduce(index int, reduceValue int, ops *[]action) {
 	if ops != nil {
 		*ops = append(*ops, action{index, Reduce, reduceValue})
@@ -108,19 +133,19 @@ func (guide *guide) reduce(index int, reduceValue int, ops *[]action) {
 	}
 
 	guide.boundArray[index].fst -= reduceValue
-	// if guide.boundArray[index].fst < guide.upperBound - 2 {
-	// 	guide.boundArray[index].fst = guide.upperBound - 2
-	// }
 	guide.increase(index+1, nil)
 }
 
-func (guide *guide) expand(rank int) {
+func (guide *guide) expand(rank int, num int) {
 	if rank <= 0 { return }
 	if len(guide.boundArray) < rank-1 {
 		panic(fmt.Sprintf("Incorrect values %d, %d", len(guide.boundArray), rank-1))
 	}
 	if rank > len(guide.boundArray) {
-		guide.boundArray = append(guide.boundArray, pair{fst: UPPER_BOUND - 2, snd: rank - 1})
+		if num < guide.upperBound - 2 {
+			num = guide.upperBound - 2
+		}
+		guide.boundArray = append(guide.boundArray, pair{fst: num, snd: rank - 1})
 		var ptr *pair = nil
 		guide.blocks = append(guide.blocks, &ptr)
 	}

@@ -1,14 +1,9 @@
 package Brodal
 
-import "container/list"
-
-type tree struct {
-	root            *node
-	id              uint
-	childrenRank    []*node
-	upperBoundGuide *guide
-	lowerBoundGuide *guide
-}
+import (
+	"container/list"
+	"fmt"
+)
 
 type reduceType byte
 
@@ -20,8 +15,38 @@ const (
 const UPPER_BOUND int = 7
 const LOWER_BOUND int = -2
 
-func (tree *tree) RootRank() int {
-	return tree.root.rank
+type tree struct {
+	root            *node
+	id              uint
+	childrenRank    []*node
+	upperBoundGuide *guide
+	lowerBoundGuide *guide
+}
+
+func newTree(value valType, treeIndex uint) *tree {
+	return &tree{
+		root:            newNode(value),
+		id:              treeIndex,
+		childrenRank:    []*node{},
+		upperBoundGuide: newGuide(UPPER_BOUND),
+		lowerBoundGuide: newGuide(LOWER_BOUND),
+	}
+}
+
+func (this *tree) RootRank() int {
+	return this.root.rank
+}
+
+func (this *tree) RootValue() valType {
+	return this.root.value
+}
+
+func (this *tree) numOfRootChildren(rank int) int {
+	if rank < 0 { return -1 }
+	if rank >= this.RootRank() {
+		panic("rank >= this.RootRank()")
+	}
+	return this.root.numOfChildren[rank]
 }
 
 func (tree *tree) Children() *list.List {
@@ -41,40 +66,65 @@ func (tree *tree) LeftmostSon() *node {
 	return tree.root.leftSon()
 }
 
-func (tree *tree) addRootChild(child *node) {
-	tree.root.pushBackChild(child, tree.childrenRank[child.rank])
-}
+func (this *tree) insertNode(child *node) bool {
 
-func (tree *tree) linkToRoot(child1 *node, child2 *node) {
-	if len(tree.childrenRank) == int(child1.rank) {
-		tree.childrenRank = append(tree.childrenRank, child1)
-	} else {
-		tree.childrenRank[child1.rank] = child1
+	if len(this.childrenRank) < child.rank {
+		panic("preveliko je")
 	}
 
-	tree.root.link(child1, child2)
+	this.mbyIncRank(child.rank == this.RootRank())
 
-	tree.upperBoundGuide.expand(tree.RootRank() - 2)
-	tree.lowerBoundGuide.expand(tree.RootRank() - 2)
+	isViolation := this.root.pushBackChild(child, this.childrenRank[child.rank])
+	if this.childrenRank[child.rank] == nil {
+		this.childrenRank[child.rank] = child
+	}
+
+	return isViolation
 }
+
+// func (tree *tree) addRootChild(child *node) bool {
+// 	return tree.root.pushBackChild(child, tree.childrenRank[child.rank])
+// }
+
+// func (tree *tree) linkToRoot(child1 *node, child2 *node) {
+// 	tree.root.link(child1, child2)
+
+// 	if child1.parent != tree.root {
+// 		panic("child1 roditelj nije root")
+// 	}
+
+// 	if len(tree.childrenRank) == int(child1.rank) {
+// 		tree.childrenRank = append(tree.childrenRank, child1)
+// 	} else {
+// 		tree.childrenRank[child1.rank] = child1
+// 	}
+
+// 	if tree.RootRank() - 2 > 0 {
+// 	}
+// }
 
 func (tree *tree) removeRootChild(child *node) *node {
 
 	if child == tree.childrenRank[child.rank] {
+		tree.childrenRank[child.rank] = nil
 		if tree.root.children.Len() > 1 {
 			if tree.root.children.Back().Value.(*node) != child {
 				if child.rightBrother().rank == child.rank {
 					tree.childrenRank[child.rank] = child.rightBrother()
 				}
 			}
-		} else {
-			tree.childrenRank[child.rank] = nil
 		}
 	}
 
-	tree.root.removeChild(child)
+	return tree.root.removeChild(child)
+}
 
-	return child
+func (this *tree) removeChildrenWithRank(rank int, num int) []*node {
+	nodes := []*node{}
+	for i := 0; i < num; i++ {
+		nodes = append(nodes, this.removeRootChild(this.childrenRank[rank]))
+	}
+	return nodes
 }
 
 func (tree *tree) delink() []*node {
@@ -83,63 +133,83 @@ func (tree *tree) delink() []*node {
 	return nodes
 }
 
-func (tree *tree) incRank(node1 *node, node2 *node) {
-	if tree.RootRank() > node1.rank || tree.RootRank() > node2.rank {
-		panic("Tree ranks don't match")
+func (this *tree) mbyIncRank(condition bool) {
+	if condition {
+		this.incRank()
 	}
-
-	tree.root.link(node1, node2)
-	if len(tree.childrenRank) == node1.rank {
-		tree.childrenRank = append(tree.childrenRank, nil)
-	}
-	tree.childrenRank[node1.rank] = node1
-	tree.upperBoundGuide.expand(tree.RootRank() - 2)
-	tree.lowerBoundGuide.expand(tree.RootRank() - 2)
 }
+func (this *tree) incRank() {
+	this.root.incRank()
 
-func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) []action {
-	if increase {
-		return tree.upperBoundGuide.forceIncrease(rank, numOfChildren+1, 3)
-	}
-
-	reduceVal := 2
-	if tree.childrenRank[rank+1].numOfChildren[rank] == 3 {
-		reduceVal = 3
-	}
-	return tree.lowerBoundGuide.forceIncrease(rank, -numOfChildren+1, reduceVal)
-}
-
-func (tree *tree) link(rank int) {
-	nodeX := tree.childrenRank[rank]
-	nodeY, nodeZ := nodeX.rightBrother(), nodeX.rightBrother().rightBrother()
-
-	if nodeZ.rightBrother().rank == rank {
-		tree.childrenRank[rank] = nodeZ.rightBrother()
+	if len(this.childrenRank) < this.RootRank() {
+		this.childrenRank[this.RootRank() - 1] = nil
 	} else {
-		tree.childrenRank[rank] = nil
+		this.childrenRank = append(this.childrenRank, nil)
 	}
 
-	minNode, nodeX, nodeY := getMinNodeFrom3(nodeX, nodeY, nodeZ)
+	if this.RootRank() - 2 > 0 {
+		this.upperBoundGuide.expand(this.RootRank() - 2, this.numOfRootChildren(this.RootRank() - 3))
+		this.lowerBoundGuide.expand(this.RootRank() - 2, -this.numOfRootChildren(this.RootRank() - 3))
+	}
+}
+
+// func (tree *tree) incRank(node1 *node, node2 *node) {
+// 	if tree.RootRank() > node1.rank || tree.RootRank() > node2.rank {
+// 		panic("Tree ranks don't match")
+// 	}
+
+// 	tree.root.link(node1, node2)
+// 	if len(tree.childrenRank) == node1.rank {
+// 		tree.childrenRank = append(tree.childrenRank, nil)
+// 	}
+// 	if node1.parent != tree.root {
+// 		panic("node1 nema root roditelja")
+// 	}
+// 	tree.childrenRank[node1.rank] = node1
+// 	if tree.RootRank() - 2 > 0 {
+// 		tree.upperBoundGuide.expand(tree.RootRank() - 2, tree.root.numOfChildren[tree.RootRank() - 3])
+// 		tree.lowerBoundGuide.expand(tree.RootRank() - 2, -tree.root.numOfChildren[tree.RootRank() - 3])
+// 	}
+// }
+
+func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) ([]action,[]action) {
+	lbReduceVal := 2
+	if tree.childrenRank[rank+1].numOfChildren[rank] == 3 {
+		lbReduceVal = 3
+	}
+
+	if increase {
+		act1 := tree.upperBoundGuide.forceIncrease(rank, numOfChildren+1, 3)
+		act2 := tree.lowerBoundGuide.forceDecrease(rank, -numOfChildren-1, lbReduceVal)
+		return act1, act2
+	}
+	act2 := tree.lowerBoundGuide.forceIncrease(rank, -numOfChildren+1, lbReduceVal)
+	act1 := tree.upperBoundGuide.forceDecrease(rank, numOfChildren-1, 3)
+
+	return act2, act1
+}
+
+func (tree *tree) linkRank(rank int) (*node,[]*node) {
+	notViolations := []*node{}
+
+	if tree.numOfRootChildren(rank) != 7 {
+		panic("manje od 7")
+	}
+
+	nodes := tree.removeChildrenWithRank(rank, 3)
+	minNode, nodeX, nodeY := getMinNodeFrom3(nodes[0], nodes[1], nodes[2])
+
+	if nodeX.value < tree.RootValue() {
+		notViolations = append(notViolations, nodeX)
+	}
+
+	if nodeY.value < tree.RootValue() {
+		notViolations = append(notViolations, nodeY)
+	}
 
 	minNode.link(nodeX, nodeY)
+	tree.insertNode(minNode)
 
-	if minNode.rank == len(tree.childrenRank) {
-		tree.childrenRank = append(tree.childrenRank, minNode)
-	}
-
-	tree.upperBoundGuide.expand(tree.RootRank() - 2)
-	tree.lowerBoundGuide.expand(tree.RootRank() - 2)
+	return minNode, notViolations
 }
 
-func newTree(value float64, treeIndex uint) *tree {
-
-	tree := &tree{
-		root:            newNode(value),
-		id:              treeIndex,
-		childrenRank:    []*node{},
-		upperBoundGuide: newGuide(UPPER_BOUND),
-		lowerBoundGuide: newGuide(LOWER_BOUND),
-	}
-
-	return tree
-}

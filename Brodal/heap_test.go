@@ -153,7 +153,7 @@ func TestRandomInsertions(t *testing.T) {
 	heap := NewHeap(1)
 	rand.Seed(time.Now().Unix())
 
-	for i := 0; i < 100000; i++ {
+	for i := 0; i < 10000; i++ {
 		val := rand.Float64()
 		println(i, val)
 		heap.Insert(val)
