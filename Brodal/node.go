@@ -64,6 +64,9 @@ func (this *node) getMinFromChildren() *node {
 }
 
 func (node *node) isGood() bool {
+	if node.parent == nil {
+		return true
+	}
 	return node.value >= node.parent.value
 }
 
@@ -71,9 +74,7 @@ func (parent *node) removeChild(child *node) *node {
 	parent.children.Remove(child.self)
 	child.parent = nil
 	parent.numOfChildren[child.rank]--
-
 	parent.mbyUpdateRank()
-
 	return child
 }
 

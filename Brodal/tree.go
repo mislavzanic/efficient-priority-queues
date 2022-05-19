@@ -2,7 +2,7 @@ package Brodal
 
 import (
 	"container/list"
-	"fmt"
+	// "fmt"
 )
 
 type reduceType byte
@@ -107,13 +107,19 @@ func (tree *tree) removeRootChild(child *node) *node {
 
 	if child == tree.childrenRank[child.rank] {
 		tree.childrenRank[child.rank] = nil
+
 		if tree.root.children.Len() > 1 {
+
 			if tree.root.children.Back().Value.(*node) != child {
+
 				if child.rightBrother().rank == child.rank {
 					tree.childrenRank[child.rank] = child.rightBrother()
 				}
+
 			}
+
 		}
+
 	}
 
 	return tree.root.removeChild(child)
@@ -153,6 +159,11 @@ func (this *tree) incRank() {
 	}
 }
 
+func (this *tree) decRank() []*node {
+	// napravit nes sa vodiljama
+	return this.removeChildrenWithRank(this.RootRank() - 1, this.numOfRootChildren(this.RootRank() - 1))
+}
+
 // func (tree *tree) incRank(node1 *node, node2 *node) {
 // 	if tree.RootRank() > node1.rank || tree.RootRank() > node2.rank {
 // 		panic("Tree ranks don't match")
@@ -189,8 +200,7 @@ func (tree *tree) askGuide(rank int, numOfChildren int, increase bool) ([]action
 	return act2, act1
 }
 
-func (tree *tree) linkRank(rank int) (*node,[]*node) {
-	notViolations := []*node{}
+func (tree *tree) linkRank(rank int) *node {
 
 	if tree.numOfRootChildren(rank) != 7 {
 		panic("manje od 7")
@@ -199,17 +209,9 @@ func (tree *tree) linkRank(rank int) (*node,[]*node) {
 	nodes := tree.removeChildrenWithRank(rank, 3)
 	minNode, nodeX, nodeY := getMinNodeFrom3(nodes[0], nodes[1], nodes[2])
 
-	if nodeX.value < tree.RootValue() {
-		notViolations = append(notViolations, nodeX)
-	}
-
-	if nodeY.value < tree.RootValue() {
-		notViolations = append(notViolations, nodeY)
-	}
-
 	minNode.link(nodeX, nodeY)
 	tree.insertNode(minNode)
 
-	return minNode, notViolations
+	return minNode
 }
 
