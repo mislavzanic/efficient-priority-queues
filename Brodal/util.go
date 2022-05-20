@@ -15,7 +15,7 @@ func getMinValTree(t1s1 *tree1Struct, t1s2 *tree1Struct) (*tree1Struct, *tree1St
 	}
 }
 
-func getMaxTree(trees []*tree) (*tree, []*tree) {
+func getMaxTree(trees ...*tree) (*tree, []*tree) {
 	if len(trees) == 0 {
 		panic("There are no trees")
 	}

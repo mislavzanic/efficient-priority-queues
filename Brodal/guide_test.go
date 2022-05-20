@@ -66,5 +66,8 @@ func TestGuide(t *testing.T) {
 	if guide.ToString() != "0,1,1,1,0,1,2,1,0," {
 		t.Error(fmt.Sprintf("Guide repr: %s", guide.ToString()))
 	}
-	fmt.Println(guide.blockToString())
+
+	guide.remove(8)
+	guide.remove(7)
+	guide.remove(6)
 }

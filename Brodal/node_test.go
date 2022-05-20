@@ -7,8 +7,9 @@ import (
 
 func TestInsertOfFirstChildren(t *testing.T) {
 	testNode := newNode(1)
-	testNode.link(newNode(2), newNode(3))
-	// testNode.addFirstChildren(newNode(2), newNode(3))
+	if _, err := testNode.link(newNode(2), newNode(3)); err != nil {
+		t.Error(err.Error())
+	}
 
 	if testNode.value != 1 {
 		t.Error(fmt.Sprintf("Test node value is %f", testNode.value))
@@ -32,26 +33,40 @@ func TestInsertOfFirstChildren(t *testing.T) {
 		}
 	}
 
-	testNode.addBrother(newNode(5), testNode.leftSon(), true)
-	if testNode.leftSon().value != 2 {
-		t.Error(fmt.Sprintf("First child value is %f", testNode.leftSon().value))
+	if lc, e := testNode.leftChild(); e == nil {
+		testNode.addBrother(newNode(5), lc, true)
 	}
 
-	if testNode.leftSon().rightBrother().value != 5 {
-		t.Error(fmt.Sprintf("Second child value is %f", testNode.leftSon().rightBrother().value))
+	if lc, e := testNode.leftChild(); e == nil {
+		if lc.value != 2 {
+			t.Error(fmt.Sprintf("First child value is %f", lc.value))
+		}
+	} else {
+		t.Error(e.Error())
 	}
 
-	if testNode.leftSon().rightBrother().rightBrother().value != 3 {
-		t.Error(fmt.Sprintf("Third child value is %f", testNode.leftSon().rightBrother().rightBrother().value))
+
+	if lc, err := testNode.leftChild(); err == nil {
+		if rb, _ := lc.rightBrother(); rb.value != 5 {
+			t.Error(fmt.Sprintf("Second child value is %f", rb.value))
+		} else {
+			if rrb, _ := rb.rightBrother(); rrb.value != 3 {
+				t.Error(fmt.Sprintf("Third child value is %f", rrb.value))
+			}
+		}
+
+	} else {
+		t.Error(err.Error())
 	}
+
 }
 
 func TestRemoveChildren(t *testing.T) {
 	testNode := newNode(1)
 	testNode.link(newNode(2), newNode(3))
-	testNode.addBrother(newNode(5), testNode.leftSon(), true)
+	testNode.addBrother(newNode(5), testNode.LeftChild(), true)
 
-	testNode.removeChild(testNode.leftSon())
+	testNode.removeChild(testNode.LeftChild())
 
 	if testNode.numOfChildren[0] != 2 {
 		t.Error(fmt.Sprintf("Test node numOfChildren[0] is %d, not 2", testNode.numOfChildren[0]))
@@ -61,21 +76,21 @@ func TestRemoveChildren(t *testing.T) {
 		t.Error(fmt.Sprintf("Test node children.Len() is %d, not 2", testNode.children.Len()))
 	}
 
-	if testNode.leftSon().value != 5 {
-		t.Error(fmt.Sprintf("First child value is %f", testNode.leftSon().value))
+	if testNode.LeftChild().value != 5 {
+		t.Error(fmt.Sprintf("First child value is %f", testNode.LeftChild().value))
 	}
 
 	if testNode.rank != 1 {
 		t.Error(fmt.Sprintf("Test node rank is %d, not 1", testNode.rank))
 	}
 
-	testNode.removeChild(testNode.leftSon())
+	testNode.removeChild(testNode.LeftChild())
 
-	if testNode.leftSon().value != 3 {
-		t.Error(fmt.Sprintf("First child value is %f", testNode.leftSon().value))
+	if testNode.LeftChild().value != 3 {
+		t.Error(fmt.Sprintf("First child value is %f", testNode.LeftChild().value))
 	}
 
-	testNode.removeChild(testNode.leftSon())
+	testNode.removeChild(testNode.LeftChild())
 
 	if testNode.rank != 0 {
 		t.Error(fmt.Sprintf("Test node rank is %d, not 0", testNode.rank))
@@ -116,8 +131,8 @@ func TestLink(t *testing.T) {
 		t.Error(fmt.Sprintf("Test node numOfChildren[0] is %d, not 2", testNode.numOfChildren[1]))
 	}
 
-	if testNode.leftSon().rank != 1 {
-		t.Error(fmt.Sprintf("First child rank is %d, not 1", testNode.leftSon().rank))
+	if lc,_ := testNode.leftChild(); lc.rank != 1 {
+		t.Error(fmt.Sprintf("First child rank is %d, not 1", lc.rank))
 	}
 
 	if testNode.rank != 2 {
@@ -137,15 +152,17 @@ func TestDelink(t *testing.T) {
 
 	testNode.link(testNode2, testNode3)
 
-	nodes := testNode.delink()
-
-	if testNode.rank != 1 {
-		t.Error(fmt.Sprintf("Test node rank is %d, not 1", testNode.rank))
-	}
-
-	for _, n := range nodes {
-		if n.rank != 1 {
-			t.Error(fmt.Sprintf("node rank is %d, not 1", n.rank))
+	if nodes, err := testNode.delink(); err == nil {
+		if testNode.rank != 1 {
+			t.Error(fmt.Sprintf("Test node rank is %d, not 1", testNode.rank))
 		}
+
+		for _, n := range nodes {
+			if n.rank != 1 {
+				t.Error(fmt.Sprintf("node rank is %d, not 1", n.rank))
+			}
+		}
+	} else {
+		t.Error(fmt.Sprint(err.Error()))
 	}
 }
