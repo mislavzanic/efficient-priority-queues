@@ -297,11 +297,11 @@ func (parent *node) delink() ([]*node, error) {
 }
 
 func (this *node) removeSelfFromViolating() {
-	if this.violatingSelf != nil {
-		this.parentViolatingList.Remove(this.violatingSelf)
-		this.violatingSelf = nil
-		this.parentViolatingList = nil
-	}
+	this.parentViolatingList = nil
+
+	if this.violatingSelf == nil { return }
+	this.parentViolatingList.Remove(this.violatingSelf)
+	this.violatingSelf = nil
 }
 
 func (this *node) setIfNoErrors(setThis *node, method func() (*node, error)) error {

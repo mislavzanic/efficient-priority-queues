@@ -1,9 +1,12 @@
 package Brodal
 
 import (
-	// "math"
-	// "fmt"
+	"errors"
+	"fmt"
 )
+
+// "math"
+// "fmt"
 
 type valType float64
 
@@ -30,7 +33,7 @@ func NewHeap(value valType) *BrodalHeap {
 
 func (bh *BrodalHeap) getTree(index int) *tree {
 	if index == 1 {
-		return bh.t1s.getTree()
+		return bh.t1s.GetTree()
 	}
 	return bh.tree2
 }
@@ -50,16 +53,16 @@ func (bh *BrodalHeap) Meld(otherHeap *BrodalHeap) {
 		minT1S, otherT1S := getMinValTree(bh.t1s, otherHeap.t1s)
 		bh.t1s = minT1S
 		if bh.getTree(2) == nil && otherHeap.getTree(2) == nil {
-			if minT1S.getTree().RootRank() <= otherT1S.getTree().RootRank() {
-				bh.tree2 = otherT1S.getTree()
+			if minT1S.GetTree().RootRank() <= otherT1S.GetTree().RootRank() {
+				bh.tree2 = otherT1S.GetTree()
 			} else {
-				bh.insertNode(1, otherT1S.getTree().root)
+				bh.insertNode(1, otherT1S.GetTree().root)
 			}
 		} else {
 			maxRankTree, otherT2 := getMaxTree(bh.getTree(2), otherHeap.getTree(2))
 			insertIndex := 2
 
-			if maxRankTree.RootRank() == minT1S.getTree().RootRank() {
+			if maxRankTree.RootRank() == minT1S.GetTree().RootRank() {
 				bh.insertNode(1, maxRankTree.root)
 				bh.tree2 = nil
 				insertIndex = 1
@@ -67,8 +70,8 @@ func (bh *BrodalHeap) Meld(otherHeap *BrodalHeap) {
 				bh.tree2 = maxRankTree
 			}
 
-			if otherT1S.getTree() != nil {
-				bh.insertNode(insertIndex, otherT1S.getTree().root)
+			if otherT1S.GetTree() != nil {
+				bh.insertNode(insertIndex, otherT1S.GetTree().root)
 				if len(otherT2) != 0 {
 					if otherT2[0].RootRank() == bh.getTree(insertIndex).RootRank() {
 						nodes := otherT2[0].DecRank()
@@ -134,27 +137,42 @@ func (bh *BrodalHeap) handleActions(treeIndex int, actions []action, child *node
 }
 
 func (bh *BrodalHeap) doReduceAction(treeIndex int, guideBound int, rank int) {
-	if guideBound == UPPER_BOUND {
+	switch guideBound {
+	case UPPER_BOUND:
 		bh.linkNodes(treeIndex, rank)
-	} else {
+	case LOWER_BOUND:
 		child, nodes := bh.delinkNodes(treeIndex, rank)
 		for _, n := range nodes {
 			bh.insertNode(treeIndex, n)
 		}
 		bh.insertNode(treeIndex, child)
+	case GUIDE_BOUND:
+		if err := bh.reduceW(rank); err != nil {
+			panic(err.Error())
+		}
+	default:
+		panic(fmt.Sprintf("Wrong bound: %d", guideBound))
 	}
 }
 
 func (bh *BrodalHeap) doDefaultAction(treeIndex int, guideBound int, child *node) {
-	if guideBound == UPPER_BOUND {
-		bh.getTree(treeIndex).insertNode(child)
-		bh.mbyAddViolation(child)
-	} else {
-		_, err := bh.getTree(treeIndex).cutOffNode(child)
-		bh.mbyRemoveFromViolating(child)
-		if err != nil {
+	switch guideBound {
+	case UPPER_BOUND:
+		if err := bh.getTree(treeIndex).insertNode(child); err != nil {
 			panic(err.Error())
 		}
+		bh.mbyAddViolation(child)
+	case LOWER_BOUND:
+		if _, err := bh.getTree(treeIndex).cutOffNode(child); err != nil {
+			panic(err.Error())
+		}
+		bh.mbyRemoveFromViolating(child)
+	case GUIDE_BOUND:
+		if err := bh.insertNewW(child); err != nil {
+			panic(err.Error())
+		}
+	default:
+		panic(fmt.Sprintf("Wrong bound: %d", guideBound))
 	}
 }
 
@@ -167,6 +185,7 @@ func (bh *BrodalHeap) linkNodes(treeIndex int, rank int) {
 
 func (bh *BrodalHeap) delinkNodes(treeIndex int, rank int) (*node, []*node) {
 	child := bh.getTree(treeIndex).RemoveChild(rank)
+	bh.mbyRemoveFromViolating(child)
 	nodes, err := child.delink()
 	if err != nil {
 		panic(err.Error())
@@ -230,14 +249,13 @@ func (bh *BrodalHeap) mbyAddViolation(child *node) {
 }
 
 func (bh *BrodalHeap) mbyRemoveFromViolating(notBad *node) {
-	if notBad.isGood() {
-		if notBad.parentViolatingList == bh.getTree(1).root.vList {
-			//TODO
-		} else if notBad.parentViolatingList == bh.getTree(1).root.wList {
-			//TODO
-		}
-		notBad.removeSelfFromViolating()
+	if !notBad.isGood() { return }
+
+	if notBad.parentViolatingList == bh.getTree(1).root.wList {
+		bh.removeFromW(notBad)
 	}
+
+	notBad.removeSelfFromViolating()
 }
 
 func (bh *BrodalHeap) addToV(child *node) {
@@ -274,5 +292,58 @@ func (bh *BrodalHeap) createAlphaSpace() {
 }
 
 func (bh *BrodalHeap) addToW(child *node) {
+	actions := bh.t1s.GetWGuide().forceIncrease(child.rank, bh.t1s.GetWNums(child.rank) + 1, 2)
+	bh.handleActions(1, actions, child)
+}
+
+func (bh *BrodalHeap) removeFromW(child *node) error {
+	return bh.t1s.removeFromW(child)
+}
+
+func (bh *BrodalHeap) reduceW(rank int) error {
+	t2Children, others, err := bh.t1s.childrenWithParentInW(rank, bh.getTree(2).root)
+	if err != nil { return err }
+
+	if len(t2Children) > 4 {
+		rmNodes := append(others, t2Children...)
+		numOfRemoved := 0
+		for numOfRemoved < 2 {
+			err := bh.removeFromW(rmNodes[numOfRemoved])
+			if err != nil {
+				return err
+			}
+			if rmNodes[numOfRemoved].parent == bh.getTree(2).root {
+				bh.insertNode(1, bh.cutOffNode(2, rmNodes[numOfRemoved]))
+			} else {
+				bh.rmViolatingNode(child, nil)
+			}
+		}
+	} else {
+		bh.reduceViolation(others[0], others[1])
+	}
+	return nil
+}
+
+func (bh *BrodalHeap) insertNewW(child *node) error {
+	return bh.t1s.insertNewW(child)
+}
+
+func (bh *BrodalHeap) reduceViolation(x1 *node, x2 *node) {
+	if x1.isGood() || x2.isGood() {
+		bh.mbyRemoveFromViolating(x1)
+		bh.mbyRemoveFromViolating(x2)
+	} else {
+		if x1.parent != x2.parent {
+			if x1.parent.value <= x2.parent.value {
+				x1.swapBrothers(x2)
+			} else {
+				x2.swapBrothers(x1)
+			}
+		}
+		bh.rmViolatingNode(x1, x2)
+	}
+}
+
+func (bh *BrodalHeap) rmViolatingNode(x1 *node, x2 *node) {
 
 }

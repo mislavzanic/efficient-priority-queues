@@ -16,6 +16,7 @@ const (
 
 const UPPER_BOUND int = 7
 const LOWER_BOUND int = -2
+const GUIDE_BOUND int = 6
 
 type tree struct {
 	root            *node
