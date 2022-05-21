@@ -299,10 +299,11 @@ func (parent *node) delink() ([]*node, error) {
 }
 
 func (this *node) removeSelfFromViolating() {
-	this.parentViolatingList = nil
-
+	if this.parentViolatingList != nil {
+		this.parentViolatingList.Remove(this.violatingSelf)
+		this.parentViolatingList = nil
+	}
 	if this.violatingSelf == nil { return }
-	this.parentViolatingList.Remove(this.violatingSelf)
 	this.violatingSelf = nil
 }
 

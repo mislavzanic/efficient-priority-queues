@@ -6,8 +6,6 @@ import (
 	"fmt"
 )
 
-// "math"
-// "fmt"
 
 type valType float64
 
@@ -91,7 +89,7 @@ func (bh *BrodalHeap) Meld(otherHeap *BrodalHeap) {
 
 	bh.updateViolations()
 	bh.createAlphaSpace()
-	// pocistit extra violacije
+	bh.updateViolations()
 }
 
 func (bh *BrodalHeap) insertNode(treeIndex int, child *node) {
@@ -123,13 +121,11 @@ func (bh *BrodalHeap) highRankAction(treeIndex int, child *node, insert bool) {
 	if insert {
 		bh.getTree(treeIndex).insertNode(child)
 		bh.handleViolation(child)
-		// bh.mbyAddViolation(child)
 	} else {
 		if _, err := bh.getTree(treeIndex).cutOffNode(child); err != nil {
 			panic(err.Error())
 		}
 		bh.handleViolation(child)
-		// bh.mbyRemoveFromViolating(child)
 	}
 }
 
@@ -170,13 +166,11 @@ func (bh *BrodalHeap) doDefaultAction(treeIndex int, guideBound int, child *node
 			panic(err.Error())
 		}
 		bh.handleViolation(child)
-		// bh.mbyAddViolation(child)
 	case LOWER_BOUND:
 		if _, err := bh.getTree(treeIndex).cutOffNode(child); err != nil {
 			panic(err.Error())
 		}
 		bh.handleViolation(child)
-		// bh.mbyRemoveFromViolating(child)
 	case GUIDE_BOUND:
 		if err := bh.insertNewW(child); err != nil {
 			panic(err.Error())
@@ -191,15 +185,11 @@ func (bh *BrodalHeap) linkNodes(treeIndex int, rank int) {
 	bh.handleViolation(minNode)
 	bh.handleViolation(minNode.LeftChild())
 	bh.handleViolation(minNode.LeftChild().RightBrother())
-	// bh.mbyAddViolation(minNode)
-	// bh.mbyRemoveFromViolating(minNode.LeftChild())
-	// bh.mbyRemoveFromViolating(minNode.LeftChild().RightBrother())
 }
 
 func (bh *BrodalHeap) delinkNodes(treeIndex int, rank int) (*node, []*node) {
 	child := bh.getTree(treeIndex).RemoveChild(rank)
 	bh.handleViolation(child)
-	// bh.mbyRemoveFromViolating(child)
 	nodes, err := child.delink()
 	if err != nil {
 		panic(err.Error())
@@ -212,7 +202,6 @@ func (bh *BrodalHeap) delink(treeIndex int) []*node {
 	nodes := bh.getTree(treeIndex).Delink()
 	for _, n := range nodes {
 		bh.handleViolation(n)
-		// bh.mbyRemoveFromViolating(n)
 	}
 	return nodes
 }
@@ -231,7 +220,6 @@ func (bh *BrodalHeap) updateHighRank(treeIndex int, rank int) {
 				nodes := bh.getTree(treeIndex).DecRank()
 				for _, n := range nodes {
 					bh.handleViolation(n)
-					// bh.mbyRemoveFromViolating(n)
 					bh.insertNode(treeIndex, n)
 				}
 			}
@@ -329,8 +317,6 @@ func (bh *BrodalHeap) createAlphaSpace() {
 	}
 
 	bh.insertNode(1, newChild)
-	// zasto ovo nije napravilo update violacija?? -> debug this
-	bh.updateViolations()
 }
 
 func (bh *BrodalHeap) addToW(child *node) error {
