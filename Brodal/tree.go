@@ -63,17 +63,18 @@ func (this *tree) ChildOfRank(rank int) *node {
 func (this *tree) childOfRank(rank int) (*node, error) {
 	if rank < this.RootRank() {
 		return this.childrenRank[rank], nil
+
 	} else {
 		return nil, errors.New(fmt.Sprintf("Rank %d is greater than roots rank", rank, this.RootRank()))
 	}
 }
 
 func (this *tree) vList() *list.List {
-	return this.vList()
+	return this.root.vList
 }
 
 func (this *tree) wList() *list.List {
-	return this.wList()
+	return this.root.wList
 }
 
 func (tree *tree) Children() *list.List {

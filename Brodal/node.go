@@ -58,7 +58,8 @@ func (this *node) LeftBrother() *node {
 	if n, err := this.leftBrother(); err == nil {
 		return n
 	} else {
-		panic(fmt.Sprint("%w", err))
+		return nil
+		// panic(fmt.Sprint("%w", err))
 	}
 }
 
@@ -73,7 +74,8 @@ func (this *node) RightBrother() *node {
 	if n, err := this.rightBrother(); err == nil {
 		return n
 	} else {
-		panic(fmt.Sprint("%w", err))
+		return nil
+		// panic(fmt.Sprint("%w", err))
 	}
 }
 

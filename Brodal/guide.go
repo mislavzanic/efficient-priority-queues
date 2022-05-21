@@ -150,6 +150,7 @@ func (guide *guide) expand(rank int, num int) {
 
 func (this *guide) remove(rank int) {
 	if rank < 0 { return }
+	if len(this.boundArray) <= rank { return }
 	(*this.blocks[rank]) = nil
 	this.blocks = this.blocks[:len(this.blocks) - 1]
 	this.boundArray = this.boundArray[:len(this.boundArray) - 1]

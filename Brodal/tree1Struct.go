@@ -105,6 +105,10 @@ func (this *tree1Struct) removeFromW(child *node) error {
 
 func (this *tree1Struct) childrenWithParentInW(rank int, parent *node) ([]*node, []*node, error) {
 	parentChildren, otherChildren := []*node{}, []*node{}
+	if this.GetWNums(rank) != 6 {
+		errMessage := "There are %d of W violations of rank %d, not 6"
+		return nil, nil, errors.New(fmt.Sprintf(errMessage, this.GetWNums(rank), rank))
+	}
 	for e := this.GetWPointers(rank).violatingSelf; e.Value.(*node).rank != rank; e = e.Next() {
 
 		if e.Value.(*node).rank != rank {
