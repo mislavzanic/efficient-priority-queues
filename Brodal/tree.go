@@ -195,8 +195,8 @@ func (this *tree) incRank() {
 	}
 
 	if this.RootRank() - 2 > 0 {
-		this.upperBoundGuide.expand(this.RootRank() - 2, this.NumOfRootChildren(this.RootRank() - 3))
-		this.lowerBoundGuide.expand(this.RootRank() - 2, -this.NumOfRootChildren(this.RootRank() - 3))
+		this.upperBoundGuide.expand(this.RootRank() - 2, this.NumOfRootChildren(this.RootRank() - 2))
+		this.lowerBoundGuide.expand(this.RootRank() - 2, -this.NumOfRootChildren(this.RootRank() - 2))
 	}
 }
 
