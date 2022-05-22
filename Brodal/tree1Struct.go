@@ -13,7 +13,7 @@ type tree1Struct struct {
 	lastKnownRank   int
 }
 
-func newT1S(value valType) *tree1Struct {
+func newT1S(value ValType) *tree1Struct {
 	return &tree1Struct{
 		tree1:           newTree(value, 1),
 		numOfNodesInT1W: []int{},

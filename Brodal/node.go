@@ -7,7 +7,7 @@ import (
 )
 
 type node struct {
-	value valType
+	value ValType
 	rank  int
 
 	self          *list.Element
@@ -24,7 +24,7 @@ type node struct {
 	parentViolatingList *list.List
 }
 
-func newNode(value valType) *node {
+func newNode(value ValType) *node {
 	node := new(node)
 	node.value = value
 	node.rank = 0
@@ -144,7 +144,7 @@ func (parent *node) addBrother(child *node, newBrother *node, left bool) (bool, 
 
 	if newBrother != nil {
 		if newBrother.parent != parent {
-			return false, errors.New(fmt.Sprintf("newBrother parent is not the parent, %f, %f", parent.value, newBrother.parent.value))
+			return false, errors.New(fmt.Sprintf("newBrother parent is not the parent, %f", parent.value))
 		}
 	}
 

@@ -26,7 +26,7 @@ type tree struct {
 	lowerBoundGuide *guide
 }
 
-func newTree(value valType, treeIndex uint) *tree {
+func newTree(value ValType, treeIndex uint) *tree {
 	return &tree{
 		root:            newNode(value),
 		id:              treeIndex,
@@ -40,7 +40,7 @@ func (this *tree) RootRank() int {
 	return this.root.rank
 }
 
-func (this *tree) RootValue() valType {
+func (this *tree) RootValue() ValType {
 	return this.root.value
 }
 
@@ -94,27 +94,27 @@ func (tree *tree) LeftChild() *node {
 	return tree.root.LeftChild()
 }
 
-func (this *tree) insertNode(child *node) error {
+func (this *tree) insertNode(child *node) (bool, error) {
 
 	if len(this.childrenRank) < child.rank {
 		panic("preveliko je")
 	}
 
-	this.MbyIncRank(child.rank == this.RootRank())
+	rankInc := this.MbyIncRank(child.rank == this.RootRank())
 
 	if _, err := this.root.pushBackChild(child, this.childrenRank[child.rank]); err == nil {
 		if this.childrenRank[child.rank] == nil {
 			this.childrenRank[child.rank] = child
 		}
-		return nil
+		return rankInc, nil
 	} else {
-		return err
+		return false, err
 	}
 }
 
 func (this *tree) InsertNodes(children ...*node) {
 	for _, n := range children {
-		if err := this.insertNode(n); err != nil {
+		if _, err := this.insertNode(n); err != nil {
 			panic(fmt.Sprint(err.Error()))
 		}
 	}
@@ -165,16 +165,17 @@ func (tree *tree) Delink() []*node {
 	}
 }
 
-func (this *tree) MbyIncRank(condition bool) {
+func (this *tree) MbyIncRank(condition bool) bool {
 	if condition {
 		this.incRank()
 	}
+	return condition
 }
 
 func (this *tree) incRank() {
 	this.root.incRank()
 
-	if len(this.childrenRank) < this.RootRank() - 1 {
+	if len(this.childrenRank) > this.RootRank() - 1 {
 		this.childrenRank[this.RootRank() - 1] = nil
 	} else {
 		this.childrenRank = append(this.childrenRank, nil)
@@ -192,6 +193,7 @@ func (this *tree) DecRank() []*node {
 	} else {
 		this.upperBoundGuide.remove(this.RootRank() - 2)
 		this.lowerBoundGuide.remove(this.RootRank() - 2)
+		// this.childrenRank[len(this.childrenRank) - 1] = nil
 		return nodes
 	}
 }
@@ -222,9 +224,8 @@ func (tree *tree) Link(rank int) *node {
 		panic(fmt.Sprint(err.Error()))
 	}
 
-	if err := tree.insertNode(minNode); err != nil {
+	if _, err := tree.insertNode(minNode); err != nil {
 		panic(fmt.Sprint(err.Error()))
-
 	}
 
 	return minNode
