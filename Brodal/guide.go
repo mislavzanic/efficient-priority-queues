@@ -43,7 +43,7 @@ func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) [
 	ops := []action{}
 
 	// println("inguide", actualValue, guide.boundArray[index].fst)
-	if actualValue > guide.boundArray[index].fst {
+	if actualValue > guide.boundArray[index].fst && guide.boundArray[index].fst >= guide.upperBound - 2 {
 
 		// slucaj kad je x_i == upperBound -> prvo fixup x_i onda increase
 		if guide.boundArray[index].fst == guide.upperBound {
@@ -161,7 +161,7 @@ func (guide *guide) ToString() string {
 	for _, p := range guide.boundArray {
 		str += strconv.Itoa(p.fst) + ","
 	}
-	return str
+	return str + "\n"
 }
 
 func (guide *guide) blockToString() string {

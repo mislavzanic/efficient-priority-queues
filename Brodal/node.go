@@ -35,6 +35,22 @@ func newNode(value ValType) *node {
 	return node
 }
 
+func (this *node) ToString() string {
+	str := "\t\tValue:"
+	str += fmt.Sprint(this.value)
+	str += "\n\t\tRank:"
+	str += fmt.Sprint(this.rank)
+	if this.parent != nil {
+		str += "\n\t\tParent:"
+		str += fmt.Sprint(this.parent.value)
+	}
+		str += "\n\t\tChildren:\n"
+	for e := this.children.Front(); e != nil; e = e.Next() {
+		str += e.Value.(*node).ToString()
+	}
+	return str + "\n"
+}
+
 func (this *node) Leaf() bool {
 	return this.children == nil || this.children.Len() == 0
 }

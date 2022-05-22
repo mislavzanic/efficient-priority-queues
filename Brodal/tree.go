@@ -3,6 +3,7 @@ package Brodal
 import (
 	"container/list"
 	"errors"
+
 	// "errors"
 	"fmt"
 )
@@ -34,6 +35,18 @@ func newTree(value ValType, treeIndex uint) *tree {
 		upperBoundGuide: newGuide(UPPER_BOUND),
 		lowerBoundGuide: newGuide(LOWER_BOUND),
 	}
+}
+
+func (this *tree) ToString() string {
+	str := this.root.ToString()
+	str += "\t" + this.upperBoundGuide.ToString()
+	str += "\t" + this.lowerBoundGuide.ToString()
+	str += "\tChildren Rank:\n"
+	str += "\t"
+	for i := 0; i < len(this.childrenRank); i++ {
+		str += fmt.Sprintf("val: %f, rank: %d", this.childrenRank[i].value, i) + "  "
+	}
+	return str + "\n"
 }
 
 func (this *tree) RootRank() int {

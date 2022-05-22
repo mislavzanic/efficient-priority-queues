@@ -40,6 +40,17 @@ func (bh *BrodalHeap) getTree(index int) *tree {
 	return bh.tree2
 }
 
+func (bh *BrodalHeap) ToString() string {
+	if bh.Empty() { return "" }
+
+	str := "Tree1:\n" + bh.getTree(1).ToString()
+	if bh.getTree(2) != nil {
+		str += "Tree2:\n" + bh.getTree(2).ToString()
+	}
+
+	return str
+}
+
 func (bh *BrodalHeap) Empty() bool {
 	return bh.getTree(1) == nil
 }
@@ -294,8 +305,9 @@ func (bh *BrodalHeap) mbyRemoveFromViolating(notBad *node) error {
 
 func (bh *BrodalHeap) addToV(child *node) error {
 	if child.violatingSelf != nil {
-		errMessage := "Child with rank %d, value %f is already in a violating set"
-		return errors.New(fmt.Sprintf(errMessage, child.rank, child.value))
+		return nil
+		// errMessage := "Child with rank %d, value %f is already in a violating set"
+		// return errors.New(fmt.Sprintf(errMessage, child.rank, child.value))
 	}
 	child.violatingSelf = bh.getTree(1).vList().PushBack(child)
 	child.parentViolatingList = bh.getTree(1).vList()
