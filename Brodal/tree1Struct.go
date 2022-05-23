@@ -13,9 +13,9 @@ type tree1Struct struct {
 	lastKnownRank   int
 }
 
-func newT1S(value ValType) *tree1Struct {
+func newT1S(value ValType, parent *BrodalHeap) *tree1Struct {
 	return &tree1Struct{
-		tree1:           newTree(value, 1),
+		tree1:           newTree(value, 1, parent),
 		numOfNodesInT1W: []int{},
 		rankPointersT1W: []*node{},
 		t1GuideW:        newGuide(6),

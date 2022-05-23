@@ -25,9 +25,9 @@ type tree struct {
 	lowerBoundGuide *guide
 }
 
-func newTree(value ValType, treeIndex uint) *tree {
+func newTree(value ValType, treeIndex uint, pH *BrodalHeap) *tree {
 	return &tree{
-		root:            newNode(value),
+		root:            newNode(value, pH),
 		id:              treeIndex,
 		childrenRank:    []*node{},
 		upperBoundGuide: newGuide(UPPER_BOUND),
@@ -147,6 +147,8 @@ func (tree *tree) cutOffNode(child *node) (*node, error) {
 			}
 		}
 	}
+
+	child.removeSelfFromViolating()
 
 	return tree.root.removeChild(child)
 }

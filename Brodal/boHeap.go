@@ -26,11 +26,9 @@ func NewEmptyHeap() *BrodalHeap {
 }
 
 func NewHeap(value ValType) *BrodalHeap {
-	return &BrodalHeap{
-		t1s:            newT1S(value),
-		tree2:          nil,
-		violationNodes: list.New(),
-	}
+	bh := NewEmptyHeap()
+	bh.t1s = newT1S(value, bh)
+	return bh
 }
 
 func (bh *BrodalHeap) getTree(index int) *tree {
@@ -270,7 +268,7 @@ func (bh *BrodalHeap) updateHighRank(treeIndex int, rank int) {
 //////////////////////////////////////////////////////////////////////////////
 
 func (bh *BrodalHeap) mbyAddViolation(child *node) error {
-	if child.isGood() {
+	if !child.isBad() {
 		return nil
 	}
 
@@ -290,18 +288,19 @@ func (bh *BrodalHeap) mbyAddViolation(child *node) error {
 }
 
 func (bh *BrodalHeap) mbyRemoveFromViolating(notBad *node) error {
-	if !notBad.isGood() {
+	if notBad.isBad() {
 		return nil
 	}
 
-	if notBad.parentViolatingList == bh.getTree(1).root.wList {
-		err := bh.removeFromW(notBad)
-		if err != nil {
-			return err
-		}
-	}
-
 	notBad.removeSelfFromViolating()
+
+	// if notBad.parentViolatingList == bh.getTree(1).root.wList {
+	// 	err := bh.removeFromW(notBad)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
 	return nil
 }
 
@@ -389,7 +388,7 @@ func (bh *BrodalHeap) insertNewW(child *node) error {
 }
 
 func (bh *BrodalHeap) reduceViolation(x1 *node, x2 *node) error {
-	if x1.isGood() || x2.isGood() {
+	if !x1.isBad() || !x2.isBad() {
 		bh.mbyRemoveFromViolating(x1)
 		bh.mbyRemoveFromViolating(x2)
 	} else {
@@ -440,6 +439,7 @@ func (bh *BrodalHeap) rmViolatingNode(x1 *node, x2 *node) error {
 			if grandParent != bh.getTree(1).root {
 				bh.cutOffNode(1, replacement)
 				grandParent.pushBackChild(replacement, parent)
+				// ovo ispod mi je sumnjivo -> za razmisliti
 				bh.mbyAddViolation(replacement)
 				grandParent.removeChild(parent)
 			} else {
@@ -481,12 +481,9 @@ func (bh *BrodalHeap) updateViolations() error {
 }
 
 func (bh *BrodalHeap) updateViolation(violation *node) error {
-	if violation.isGood() {
+	if !violation.isBad() {
 		if violation.violatingSelf != nil {
-			err := bh.mbyRemoveFromViolating(violation)
-			if err != nil {
-				return err
-			}
+			violation.removeSelfFromViolating()
 		}
 	} else {
 		err := bh.mbyAddViolation(violation)

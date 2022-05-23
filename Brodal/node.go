@@ -13,8 +13,7 @@ type node struct {
 	self          *list.Element
 	violatingSelf *list.Element
 
-	parent *node
-
+	parent        *node
 	children      *list.List
 	numOfChildren []int
 
@@ -22,15 +21,18 @@ type node struct {
 	wList *list.List
 
 	parentViolatingList *list.List
+
+	parentHeap *BrodalHeap
 }
 
-func newNode(value ValType) *node {
+func newNode(value ValType, ph *BrodalHeap) *node {
 	node := new(node)
 	node.value = value
 	node.rank = 0
 	node.children = list.New()
 	node.vList = list.New()
 	node.wList = list.New()
+	node.parentHeap = ph
 
 	return node
 }
@@ -44,7 +46,7 @@ func (this *node) ToString() string {
 		str += "\n\t\tParent:"
 		str += fmt.Sprint(this.parent.value)
 	}
-		str += "\n\t\tChildren:\n"
+	str += "\n\t\tChildren:\n"
 	for e := this.children.Front(); e != nil; e = e.Next() {
 		str += e.Value.(*node).ToString()
 	}
@@ -63,7 +65,7 @@ func (parent *node) LeftChild() *node {
 	}
 }
 
-func (parent *node) leftChild() (*node,error) {
+func (parent *node) leftChild() (*node, error) {
 	if parent.Leaf() {
 		return nil, errors.New("Node doesn't have any children")
 	}
@@ -79,7 +81,7 @@ func (this *node) LeftBrother() *node {
 	}
 }
 
-func (this *node) leftBrother() (*node,error) {
+func (this *node) leftBrother() (*node, error) {
 	if this.self.Prev() == nil {
 		return nil, errors.New(fmt.Sprintf("Node with rank = %d, value = %f, doesn't have a left brother", this.rank, this.value))
 	}
@@ -103,12 +105,16 @@ func (this *node) rightBrother() (*node, error) {
 }
 
 func (this *node) getMinFromW() *node {
-	if this.wList.Len() == 0 { return nil }
+	if this.wList.Len() == 0 {
+		return nil
+	}
 	return getMinFromList(this.wList).Value.(*node)
 }
 
 func (this *node) getMinFromV() *node {
-	if this.vList.Len() == 0 { return nil }
+	if this.vList.Len() == 0 {
+		return nil
+	}
 	return getMinFromList(this.vList).Value.(*node)
 }
 
@@ -116,15 +122,16 @@ func (this *node) getMinFromChildren() *node {
 	return getMinFromList(this.children).Value.(*node)
 }
 
-func (node *node) isGood() bool {
-	if node.parent == nil {
-		return true
-	}
-	return node.value >= node.parent.value
+func (node *node) isBad() bool {
+	// if node.parent == nil {
+	// 	return true
+	// }
+	return node.parent != nil && node.value < node.parent.value
 }
 
 func (parent *node) removeChild(child *node) (*node, error) {
 	if value := parent.children.Remove(child.self); value != nil {
+		// child.removeSelfFromViolating()
 		child.parent = nil
 		parent.numOfChildren[child.rank]--
 		parent.mbyUpdateRank()
@@ -222,7 +229,7 @@ func (parent *node) incRank() {
 	}
 }
 
-func (this *node) decRank() ([]*node, error){
+func (this *node) decRank() ([]*node, error) {
 
 	if this.rank == 0 {
 		return nil, errors.New(fmt.Sprintf("Node with value %f is of rank 0", this.value))
@@ -251,7 +258,7 @@ func (this *node) DecRank() []*node {
 func (node *node) link(xNode *node, yNode *node) (bool, error) {
 
 	if node.rank != xNode.rank || node.rank != yNode.rank {
-		return false ,errors.New(fmt.Sprintf("Node ranks don't match, %d, %d, %d", node.rank, xNode.rank, yNode.rank))
+		return false, errors.New(fmt.Sprintf("Node ranks don't match, %d, %d, %d", node.rank, xNode.rank, yNode.rank))
 	}
 
 	violating := false
@@ -316,11 +323,20 @@ func (parent *node) delink() ([]*node, error) {
 }
 
 func (this *node) removeSelfFromViolating() {
-	if this.parentViolatingList != nil {
+
+	switch this.parentViolatingList {
+	case this.parentHeap.getTree(1).wList():
+		err := this.parentHeap.t1s.removeFromW(this)
+		if err != nil {
+			panic(err.Error())
+		}
+	case nil:
+		this.violatingSelf = nil
+	default:
 		this.parentViolatingList.Remove(this.violatingSelf)
 		this.parentViolatingList = nil
 	}
-	if this.violatingSelf == nil { return }
+
 	this.violatingSelf = nil
 }
 
