@@ -105,7 +105,6 @@ func (bh *BrodalHeap) Meld(otherHeap *BrodalHeap) {
 	if err := bh.updateViolations(); err != nil {
 		panic(err.Error())
 	}
-	println(bh.violationNodes.Len())
 }
 
 func (bh *BrodalHeap) insertNode(treeIndex int, child *node) {
@@ -129,15 +128,18 @@ func (bh *BrodalHeap) heapAction(treeIndex int, child *node, insert bool) {
 }
 
 func (bh *BrodalHeap) lowRankAction(treeIndex int, child *node, insert bool) {
-	actionsInc, actionsDec := bh.getTree(treeIndex).AskGuide(child.rank, bh.getTree(treeIndex).NumOfRootChildren(child.rank)+1, insert)
-	bh.handleActions(treeIndex, append(actionsInc, actionsDec...), child)
+	actionsInc := bh.getTree(treeIndex).AskGuide(child.rank, bh.getTree(treeIndex).NumOfRootChildren(child.rank)+1, insert)
+	// bh.handleActions(treeIndex, append(actionsInc, actionsDec...), child)
+	bh.handleActions(treeIndex, actionsInc, child)
 }
 
 func (bh *BrodalHeap) highRankAction(treeIndex int, child *node, insert bool) {
 	if insert {
+		// r := child.rank
 		if _, err := bh.getTree(treeIndex).insertNode(child); err != nil {
 			panic(err.Error())
 		}
+		// bh.handleViolation({child: child, rank: r})
 		bh.handleViolation(child)
 	} else {
 		if _, err := bh.getTree(treeIndex).cutOffNode(child); err != nil {
@@ -264,7 +266,7 @@ func (bh *BrodalHeap) updateHighRank(treeIndex int, rank int) {
 }
 
 //////////////////////////////////////////////////////////////////////////////
-////////////////////////Violation Handling////////////////////////////////////
+///////////////////////////Violation Handling/////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
 func (bh *BrodalHeap) mbyAddViolation(child *node) error {
@@ -344,7 +346,8 @@ func (bh *BrodalHeap) createAlphaSpace() {
 }
 
 func (bh *BrodalHeap) addToW(child *node) error {
-	actions := bh.t1s.GetWGuide().forceIncrease(child.rank, bh.t1s.GetWNums(child.rank)+1, 2)
+	// actions := bh.t1s.GetWGuide().forceIncrease(child.rank, bh.t1s.GetWNums(child.rank)+1, 2)
+	actions := bh.t1s.GetWGuide().forceIncrease(child.rank, &bh.t1s.numOfNodesInT1W, 2)
 	bh.handleActions(1, actions, child)
 	return nil
 }
@@ -492,8 +495,4 @@ func (bh *BrodalHeap) updateViolation(violation *node) error {
 		}
 	}
 	return nil
-}
-
-func (bh *BrodalHeap) checkForLowV() {
-
 }

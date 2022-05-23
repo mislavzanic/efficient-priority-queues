@@ -2,6 +2,7 @@ package Brodal
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 )
 
@@ -39,13 +40,15 @@ func newGuide(upperBound int) *guide {
 	}
 }
 
-func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) []action {
+func (guide *guide) forceIncrease(index int, valArray *[]int, reduceValue int) []action {
 	ops := []action{}
 
-	// println("inguide", actualValue, guide.boundArray[index].fst)
-	if actualValue > guide.boundArray[index].fst && guide.boundArray[index].fst >= guide.upperBound - 2 {
+	actualValue := (*valArray)[index] + 1
+	if guide.upperBound < 0 {
+		actualValue = -(*valArray)[index] + 1
+	}
+	if actualValue > guide.boundArray[index].fst {
 
-		// slucaj kad je x_i == upperBound -> prvo fixup x_i onda increase
 		if guide.boundArray[index].fst == guide.upperBound {
 			guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
 		}
@@ -53,7 +56,7 @@ func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) [
 		guide.increase(index, &ops)
 
 		if guide.boundArray[index].fst == guide.upperBound-1 && (*guide.blocks[index]) != nil {
-			guide.fixUp(*guide.blocks[index], reduceValue, &ops)
+			guide.fixUp(*guide.blocks[index], (*valArray)[index], reduceValue, &ops)
 		} else if guide.boundArray[index].fst == guide.upperBound {
 			if (*guide.blocks[index]) == nil {
 				guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
@@ -69,24 +72,30 @@ func (guide *guide) forceIncrease(index int, actualValue int, reduceValue int) [
 	return ops
 }
 
-func (guide *guide) forceDecrease(index int, actualValue int, reduceValue int) []action {
-	ops := []action{}
-	if actualValue > guide.upperBound - 2 {
-		guide.decrease(index, nil)
-		if guide.boundArray[index].fst == guide.upperBound-1 {
-			(*guide.blocks[index]) = nil
-		} else {
-			if (*guide.blocks[index]) != nil {
-				guide.fixUp(*guide.blocks[index], reduceValue, &ops)
-			}
-		}
-	}
-	return ops
-}
+// func (guide *guide) forceDecrease(index int, actualValue int, reduceValue int) []action {
+// 	ops := []action{}
+// 	if actualValue > guide.upperBound - 2 {
+// 		guide.decrease(index, nil)
+// 		if guide.boundArray[index].fst == guide.upperBound-1 {
+// 			(*guide.blocks[index]) = nil
+// 		} else {
+// 			if (*guide.blocks[index]) != nil {
+// 				guide.fixUp(*guide.blocks[index], reduceValue, &ops)
+// 			}
+// 		}
+// 	}
+// 	return ops
+// }
 
-func (guide *guide) fixUp(pair *pair, reduceValue int, ops *[]action) {
-	guide.reduce(pair.snd, reduceValue, ops)
+func (guide *guide) fixUp(pair *pair, actualValue int, reduceValue int, ops *[]action) {
 	(*guide.blocks[pair.snd]) = nil
+
+	if actualValue != guide.upperBound {
+		guide.boundArray[pair.snd + 1].fst = int(math.Max(float64(actualValue), float64(guide.upperBound - 2)))
+		return
+	}
+
+	guide.reduce(pair.snd, reduceValue, ops)
 
 	if pair.snd != len(guide.boundArray)-1 {
 
@@ -139,10 +148,7 @@ func (guide *guide) expand(rank int, num int) {
 		panic(fmt.Sprintf("Incorrect values %d, %d", len(guide.boundArray), rank-1))
 	}
 	if rank > len(guide.boundArray) {
-		if num < guide.upperBound - 2 {
-			num = guide.upperBound - 2
-		}
-		guide.boundArray = append(guide.boundArray, pair{fst: num, snd: rank - 1})
+		guide.boundArray = append(guide.boundArray, pair{fst: int(math.Max(float64(num), float64(guide.upperBound - 2))), snd: rank - 1})
 		var ptr *pair = nil
 		guide.blocks = append(guide.blocks, &ptr)
 	}

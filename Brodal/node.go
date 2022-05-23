@@ -216,6 +216,7 @@ func (parent *node) mbyUpdateRank() {
 
 func (parent *node) incRank() {
 	parent.rank++
+	// update ako je cvor u nekoj W listi --> potrebne zasebne klase za V i W !!!!
 	for len(parent.numOfChildren) < int(parent.rank) {
 		parent.numOfChildren = append(parent.numOfChildren, 0)
 	}

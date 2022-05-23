@@ -3,8 +3,6 @@ package Brodal
 import (
 	"container/list"
 	"errors"
-
-	// "errors"
 	"fmt"
 )
 
@@ -195,8 +193,8 @@ func (this *tree) incRank() {
 	}
 
 	if this.RootRank() - 2 > 0 {
-		this.upperBoundGuide.expand(this.RootRank() - 2, this.NumOfRootChildren(this.RootRank() - 2))
-		this.lowerBoundGuide.expand(this.RootRank() - 2, -this.NumOfRootChildren(this.RootRank() - 2))
+		this.upperBoundGuide.expand(this.RootRank() - 2, this.NumOfRootChildren(this.RootRank() - 3))
+		this.lowerBoundGuide.expand(this.RootRank() - 2, -this.NumOfRootChildren(this.RootRank() - 3))
 	}
 }
 
@@ -211,21 +209,19 @@ func (this *tree) DecRank() []*node {
 	}
 }
 
-func (tree *tree) AskGuide(rank int, numOfChildren int, insert bool) ([]action,[]action) {
+func (tree *tree) AskGuide(rank int, numOfChildren int, insert bool) []action {
 	lbReduceVal := 2
 	if tree.childrenRank[rank+1].numOfChildren[rank] == 3 {
 		lbReduceVal = 3
 	}
 
 	if insert {
-		act1 := tree.upperBoundGuide.forceIncrease(rank, numOfChildren+1, 3)
-		act2 := tree.lowerBoundGuide.forceDecrease(rank, -numOfChildren-1, lbReduceVal)
-		return act1, act2
+		// act2 := tree.lowerBoundGuide.forceDecrease(rank, -numOfChildren-1, lbReduceVal)
+		return tree.upperBoundGuide.forceIncrease(rank, &tree.root.numOfChildren, 3)
 	}
-	act2 := tree.lowerBoundGuide.forceIncrease(rank, -numOfChildren+1, lbReduceVal)
-	act1 := tree.upperBoundGuide.forceDecrease(rank, numOfChildren-1, 3)
+	// act1 := tree.upperBoundGuide.forceDecrease(rank, numOfChildren-1, 3)
 
-	return act2, act1
+	return tree.lowerBoundGuide.forceIncrease(rank, &tree.root.numOfChildren, lbReduceVal)
 }
 
 func (tree *tree) Link(rank int) *node {
