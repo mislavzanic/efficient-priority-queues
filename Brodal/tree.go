@@ -57,6 +57,10 @@ func (this *tree) RootValue() ValType {
 	return this.root.value
 }
 
+func (this *tree) SetRootValue(newValue ValType) {
+	this.root.SetValue(newValue)
+}
+
 func (this *tree) NumOfRootChildren(rank int) int {
 	if rank < 0 {
 		return -1
@@ -80,7 +84,7 @@ func (this *tree) childOfRank(rank int) (*node, error) {
 		return this.childrenRank[rank], nil
 
 	} else {
-		return nil, errors.New(fmt.Sprintf("Rank %d is greater than roots rank", rank, this.RootRank()))
+		return nil, errors.New(fmt.Sprintf("Rank %d is greater than roots rank %d", rank, this.RootRank()))
 	}
 }
 

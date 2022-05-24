@@ -54,6 +54,10 @@ func (this *node) Leaf() bool {
 	return this.children == nil || this.children.Len() == 0
 }
 
+func (this *node) SetValue(newValue ValType) {
+	this.value = newValue
+}
+
 func (parent *node) LeftChild() *node {
 	if n, err := parent.leftChild(); err == nil {
 		return n

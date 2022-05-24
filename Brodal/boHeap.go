@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
+	"math"
 )
 
 
@@ -53,9 +54,102 @@ func (bh *BrodalHeap) Empty() bool {
 	return bh.getTree(1) == nil
 }
 
+func (bh *BrodalHeap) Min() ValType {
+	return bh.getTree(1).RootValue()
+}
+
+//////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////DeleteMin////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
+
+func (bh *BrodalHeap) DeleteMin() ValType {
+	min := bh.Min()
+
+	if bh.getTree(2) != nil {
+		if bh.getTree(2).RootRank() == 0 && bh.getTree(1).RootRank() == 0 {
+			bh = NewHeap(bh.getTree(2).RootValue())
+			return min
+		} else {
+			bh.moveT2ToT1()
+		}
+	} else {
+		if bh.getTree(1).RootRank() == 0 {
+			bh = NewEmptyHeap()
+			return min
+		}
+	}
+
+	newMin, other := bh.getNewMin()
+
+	trees := bh.getTree(1).RmRfRoot()
+	newMinV, newMinW := newMin.vList, newMin.wList
+	oldV, oldW := bh.getTree(1).vList(), bh.getTree(1).wList()
+
+	bh = NewHeap(newMin.value)
+
+	for e := trees.Back(); e != nil; e = e.Prev() {
+		bh.insertNode(1, e.Value.(*node))
+	}
+
+	for e := newMin.children.Front(); e != nil; e = e.Next() {
+		bh.insertNode(1, e.Value.(*node))
+	}
+
+	for e := oldV.Front(); e != nil; e = e.Next() {
+		bh.handleViolation(e.Value.(*node))
+	}
+
+	for e := oldW.Front(); e != nil; e = e.Next() {
+		bh.handleViolation(e.Value.(*node))
+	}
+
+	for e := newMinV.Front(); e != nil; e = e.Next() {
+		bh.handleViolation(e.Value.(*node))
+	}
+
+	for e := newMinW.Front(); e != nil; e = e.Next() {
+		bh.handleViolation(e.Value.(*node))
+	}
+
+	bh.handleViolation(other)
+	err := bh.updateViolations()
+	if err != nil {
+		panic(err.Error())
+	}
+
+	for e := bh.getTree(1).wList().Front(); e != nil; {
+		if e.Next().Value.(*node).rank == e.Value.(*node).rank {
+			bh.reduceViolation(e.Value.(*node), e.Next().Value.(*node))
+		} else {
+			e = e.Next()
+		}
+	}
+
+	return min
+}
+
+func (bh *BrodalHeap) DecreaseKey(child *node, newValue ValType) {
+	if newValue < bh.Min() {
+		child.value = bh.Min()
+		bh.getTree(1).SetRootValue(newValue)
+	} else {
+		child.SetValue(newValue)
+	}
+	bh.handleViolation(child)
+}
+
+func (bh *BrodalHeap) Delete(child *node) {
+	bh.DecreaseKey(child, ValType(math.Inf(-1)))
+	bh.DeleteMin()
+}
+
 func (bh *BrodalHeap) Insert(value ValType) {
 	bh.Meld(NewHeap(value))
 }
+
+//////////////////////////////////////////////////////////////////////////////
+///////////////////////////////// Meld ///////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////
 
 func (bh *BrodalHeap) Meld(otherHeap *BrodalHeap) {
 	if bh.Empty() {
@@ -512,4 +606,39 @@ func (bh *BrodalHeap) updateViolation(violation *node) error {
 		}
 	}
 	return nil
+}
+
+func (bh *BrodalHeap) moveT2ToT1() {
+	child := bh.getTree(2).Children().Back()
+	for bh.getTree(2).Children().Len() > 0 {
+		_, err := bh.getTree(2).cutOffNode(child.Value.(*node))
+		if err != nil {
+			panic(err.Error())
+		}
+		bh.insertNode(1, child.Value.(*node))
+		child = bh.getTree(2).Children().Back()
+	}
+	bh.insertNode(1, bh.getTree(2).root)
+	bh.tree2 = nil
+}
+
+func (bh *BrodalHeap) getNewMin() (*node, *node) {
+	minW := bh.getTree(1).root.getMinFromW()
+	minV := bh.getTree(1).root.getMinFromV()
+	minSubTree := bh.getTree(1).root.getMinFromChildren()
+	newMin, _, _ := getMinNodeFrom3(minW, minV, minSubTree)
+
+	mbySwap := bh.t1s.tree1.childrenRank[newMin.rank]
+
+	if newMin.parent != bh.getTree(1).root {
+		mbySwap.parent = newMin.parent
+		newMin.parent = bh.getTree(1).root
+
+		temp := mbySwap.self
+		mbySwap.self = newMin.self
+		newMin.self = temp
+		bh.getTree(1).childrenRank[newMin.rank] = newMin
+	}
+
+	return bh.cutOffNode(1, newMin), mbySwap
 }
