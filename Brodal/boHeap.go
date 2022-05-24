@@ -67,14 +67,15 @@ func (bh *BrodalHeap) DeleteMin() ValType {
 
 	if bh.getTree(2) != nil {
 		if bh.getTree(2).RootRank() == 0 && bh.getTree(1).RootRank() == 0 {
-			bh = NewHeap(bh.getTree(2).RootValue())
+			bh.t1s = newT1S(bh.getTree(2).RootValue(), bh)
+			bh.tree2 = nil
 			return min
 		} else {
 			bh.moveT2ToT1()
 		}
 	} else {
 		if bh.getTree(1).RootRank() == 0 {
-			bh = NewEmptyHeap()
+			bh.t1s = newEmptyT1S()
 			return min
 		}
 	}
@@ -85,7 +86,8 @@ func (bh *BrodalHeap) DeleteMin() ValType {
 	newMinV, newMinW := newMin.vList, newMin.wList
 	oldV, oldW := bh.getTree(1).vList(), bh.getTree(1).wList()
 
-	bh = NewHeap(newMin.value)
+	bh.t1s = newT1S(newMin.value, bh)
+	bh.tree2 = nil
 
 	for e := trees.Back(); e != nil; e = e.Prev() {
 		bh.insertNode(1, e.Value.(*node))
@@ -436,7 +438,6 @@ func (bh *BrodalHeap) createAlphaSpace() {
 		panic("Tree2 is of rank 0")
 	}
 
-	// currT1Rank := bh.getTree(1).RootRank()
 	if bh.getTree(2).RootRank() <= bh.getTree(1).RootRank()+1 {
 		nodes := bh.getTree(2).DecRank()
 		for _, n := range nodes {
