@@ -50,7 +50,7 @@ func (guide *guide) forceIncrease(index int, valArray *[]int, reduceValue int) [
 	if actualValue > guide.boundArray[index].fst {
 
 		if guide.boundArray[index].fst == guide.upperBound {
-			guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
+			guide.fixUp(&guide.boundArray[index], (*valArray)[index], reduceValue, &ops)
 		}
 
 		guide.increase(index, &ops)
@@ -59,10 +59,10 @@ func (guide *guide) forceIncrease(index int, valArray *[]int, reduceValue int) [
 			guide.fixUp(*guide.blocks[index], (*valArray)[index], reduceValue, &ops)
 		} else if guide.boundArray[index].fst == guide.upperBound {
 			if (*guide.blocks[index]) == nil {
-				guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
+				guide.fixUp(&guide.boundArray[index], (*valArray)[index], reduceValue, &ops)
 			} else {
-				guide.fixUp(*guide.blocks[index], reduceValue, &ops)
-				guide.fixUp(&guide.boundArray[index], reduceValue, &ops)
+				guide.fixUp(*guide.blocks[index], (*valArray)[index], reduceValue, &ops)
+				guide.fixUp(&guide.boundArray[index], (*valArray)[index], reduceValue, &ops)
 			}
 		}
 	} else {
@@ -91,7 +91,7 @@ func (guide *guide) fixUp(pair *pair, actualValue int, reduceValue int, ops *[]a
 	(*guide.blocks[pair.snd]) = nil
 
 	if actualValue != guide.upperBound {
-		guide.boundArray[pair.snd + 1].fst = int(math.Max(float64(actualValue), float64(guide.upperBound - 2)))
+		guide.boundArray[pair.snd].fst = int(math.Max(float64(actualValue), float64(guide.upperBound - 2)))
 		return
 	}
 

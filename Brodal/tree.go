@@ -23,15 +23,17 @@ type tree struct {
 	childrenRank    []*node
 	upperBoundGuide *guide
 	lowerBoundGuide *guide
+	parentHeap      *BrodalHeap
 }
 
 func newTree(value ValType, treeIndex uint, pH *BrodalHeap) *tree {
 	return &tree{
-		root:            newNode(value, pH),
+		root:            newNode(value),
 		id:              treeIndex,
 		childrenRank:    []*node{},
 		upperBoundGuide: newGuide(UPPER_BOUND),
 		lowerBoundGuide: newGuide(LOWER_BOUND),
+		parentHeap: pH,
 	}
 }
 
@@ -56,7 +58,9 @@ func (this *tree) RootValue() ValType {
 }
 
 func (this *tree) NumOfRootChildren(rank int) int {
-	if rank < 0 { return -1 }
+	if rank < 0 {
+		return -1
+	}
 	if rank >= this.RootRank() {
 		panic("rank >= this.RootRank()")
 	}
@@ -148,9 +152,13 @@ func (tree *tree) cutOffNode(child *node) (*node, error) {
 		}
 	}
 
-	child.removeSelfFromViolating()
+	_, err := tree.root.removeChild(child)
+	if err != nil {
+		panic(err.Error())
+	}
+	tree.parentHeap.mbyRemoveFromViolating(child)
 
-	return tree.root.removeChild(child)
+	return child, err
 }
 
 func (this *tree) RemoveChildren(rank int, num int) []*node {
@@ -171,7 +179,7 @@ func (this *tree) RemoveChild(rank int) *node {
 
 func (tree *tree) Delink() []*node {
 	if nodes, err := tree.root.delink(); err == nil {
-		tree.childrenRank[tree.RootRank() - 1] = tree.LeftChild()
+		tree.childrenRank[tree.RootRank()-1] = tree.LeftChild()
 		return nodes
 	} else {
 		panic(fmt.Sprint(err.Error()))
@@ -188,15 +196,15 @@ func (this *tree) MbyIncRank(condition bool) bool {
 func (this *tree) incRank() {
 	this.root.incRank()
 
-	if len(this.childrenRank) > this.RootRank() - 1 {
-		this.childrenRank[this.RootRank() - 1] = nil
+	if len(this.childrenRank) > this.RootRank()-1 {
+		this.childrenRank[this.RootRank()-1] = nil
 	} else {
 		this.childrenRank = append(this.childrenRank, nil)
 	}
 
-	if this.RootRank() - 2 > 0 {
-		this.upperBoundGuide.expand(this.RootRank() - 2, this.NumOfRootChildren(this.RootRank() - 3))
-		this.lowerBoundGuide.expand(this.RootRank() - 2, -this.NumOfRootChildren(this.RootRank() - 3))
+	if this.RootRank()-2 > 0 {
+		this.upperBoundGuide.expand(this.RootRank()-2, this.NumOfRootChildren(this.RootRank()-3))
+		this.lowerBoundGuide.expand(this.RootRank()-2, -this.NumOfRootChildren(this.RootRank()-3))
 	}
 }
 
@@ -241,4 +249,3 @@ func (tree *tree) Link(rank int) *node {
 
 	return minNode
 }
-

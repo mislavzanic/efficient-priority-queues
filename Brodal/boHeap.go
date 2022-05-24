@@ -63,6 +63,7 @@ func (bh *BrodalHeap) Meld(otherHeap *BrodalHeap) {
 	} else {
 		minT1S, otherT1S := getMinValTree(bh.t1s, otherHeap.t1s)
 		bh.t1s = minT1S
+		bh.getTree(1).parentHeap = bh
 		if bh.getTree(2) == nil && otherHeap.getTree(2) == nil {
 			if minT1S.GetTree().RootRank() <= otherT1S.GetTree().RootRank() {
 				bh.tree2 = otherT1S.GetTree()
@@ -79,6 +80,7 @@ func (bh *BrodalHeap) Meld(otherHeap *BrodalHeap) {
 				insertIndex = 1
 			} else {
 				bh.tree2 = maxRankTree
+				bh.getTree(2).parentHeap = bh
 			}
 
 			if otherT1S.GetTree() != nil {
@@ -292,8 +294,24 @@ func (bh *BrodalHeap) mbyRemoveFromViolating(notBad *node) error {
 		return nil
 	}
 
-	notBad.removeSelfFromViolating()
+	switch notBad.parentViolatingList {
+	case bh.getTree(1).wList():
+		err := bh.removeFromW(notBad)
+		if err != nil {
+			panic(err.Error())
+		}
+	case nil:
+		notBad.violatingSelf = nil
+	default:
+		// if notBad.violatingSelf == nil {
+		notBad.parentViolatingList.Remove(notBad.violatingSelf)
+		// }
+		notBad.parentViolatingList = nil
+	}
 
+	notBad.parentViolatingList = nil
+	notBad.violatingSelf = nil
+	// notBad.removeSelfFromViolating()
 	// if notBad.parentViolatingList == bh.getTree(1).root.wList {
 	// 	err := bh.removeFromW(notBad)
 	// 	if err != nil {
@@ -483,8 +501,10 @@ func (bh *BrodalHeap) updateViolations() error {
 func (bh *BrodalHeap) updateViolation(violation *node) error {
 	if !violation.isBad() {
 		if violation.violatingSelf != nil {
-			violation.removeSelfFromViolating()
+			bh.mbyRemoveFromViolating(violation)
+			// violation.removeSelfFromViolating()
 		}
+		violation.parentViolatingList = nil
 	} else {
 		err := bh.mbyAddViolation(violation)
 		if err != nil {

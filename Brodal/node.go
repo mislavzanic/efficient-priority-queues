@@ -21,18 +21,15 @@ type node struct {
 	wList *list.List
 
 	parentViolatingList *list.List
-
-	parentHeap *BrodalHeap
 }
 
-func newNode(value ValType, ph *BrodalHeap) *node {
+func newNode(value ValType) *node {
 	node := new(node)
 	node.value = value
 	node.rank = 0
 	node.children = list.New()
 	node.vList = list.New()
 	node.wList = list.New()
-	node.parentHeap = ph
 
 	return node
 }
@@ -324,19 +321,24 @@ func (parent *node) delink() ([]*node, error) {
 
 func (this *node) removeSelfFromViolating() {
 
-	switch this.parentViolatingList {
-	case this.parentHeap.getTree(1).wList():
-		err := this.parentHeap.t1s.removeFromW(this)
-		if err != nil {
-			panic(err.Error())
-		}
-	case nil:
-		this.violatingSelf = nil
-	default:
-		this.parentViolatingList.Remove(this.violatingSelf)
-		this.parentViolatingList = nil
-	}
+	// bug kod parentHeap varijable -> ne resetiram ju
+	// switch this.parentViolatingList {
+	// case this.parentHeap.getTree(1).wList():
+	// 	err := this.parentHeap.t1s.removeFromW(this)
+	// 	if err != nil {
+	// 		panic(err.Error())
+	// 	}
+	// case nil:
+	// 	this.violatingSelf = nil
+	// default:
+	// 	this.parentViolatingList.Remove(this.violatingSelf)
+	// 	this.parentViolatingList = nil
+	// }
 
+	if this.parentViolatingList != nil {
+		this.parentViolatingList.Remove(this.violatingSelf)
+	}
+	this.parentViolatingList = nil
 	this.violatingSelf = nil
 }
 

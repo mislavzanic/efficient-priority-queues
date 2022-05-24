@@ -34,7 +34,7 @@ func newEmptyT1S() *tree1Struct {
 }
 
 func (this *tree1Struct) GetTree() (*tree) {
-	if this.tree1.root.rank != this.lastKnownRank {
+	if this.tree1 != nil && this.tree1.root.rank != this.lastKnownRank {
 		this.lastKnownRank = this.tree1.root.rank
 		this.Update()
 	}
@@ -72,14 +72,14 @@ func (this *tree1Struct) Update() {
 
 func (this *tree1Struct) insertNewW(child *node) error {
 	if this.numOfNodesInT1W[child.rank] == 0 {
+		child.violatingSelf = this.tree1.wList().PushFront(child)
 		this.rankPointersT1W[child.rank] = child
-		child.violatingSelf = this.tree1.vList().PushFront(child)
 	} else {
 		if this.rankPointersT1W[child.rank].violatingSelf == nil {
 			errorStr := "Child with rank %d, value %f has violating self == nil"
 			return errors.New(fmt.Sprintf(errorStr, this.rankPointersT1W[child.rank].rank, this.rankPointersT1W[child.rank].value))
 		}
-		child.violatingSelf = this.tree1.vList().InsertAfter(child, this.rankPointersT1W[child.rank].violatingSelf)
+		child.violatingSelf = this.tree1.wList().InsertAfter(child, this.rankPointersT1W[child.rank].violatingSelf)
 	}
 	this.numOfNodesInT1W[child.rank]++
 	child.parentViolatingList = this.tree1.wList()
@@ -90,8 +90,8 @@ func (this *tree1Struct) removeFromW(child *node) error {
 	// moguci bug -> izbacivanje cvora iz W jer mu se rank povecava -> rank mu je >= ranka korijena pa se trigera error ispod
 	if child.rank >= len(this.numOfNodesInT1W) || child.rank >= len(this.rankPointersT1W) {
 
-		// errMessage := "Rank of a node and lengths of lists of W set don't match, child rank: %d, child value: %f"
-		// return errors.New(fmt.Sprintf(errMessage, child.rank, child.value))
+		errMessage := "Rank of a node and lengths of lists of W set don't match, child rank: %d, child value: %f"
+		return errors.New(fmt.Sprintf(errMessage, child.rank, child.value))
 
 	} else if this.rankPointersT1W[child.rank] == child {
 		this.rankPointersT1W[child.rank] = nil
