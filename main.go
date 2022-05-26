@@ -45,7 +45,7 @@ func main() {
 	heap.DeleteMin()
 	heap.DeleteMin()
 
-	for i := 0; i < 300; i++ {
+	for i := 0; i < 30000; i++ {
 		val := rand.Float64()
 		heap.Insert(Brodal.ValType(val))
 	}
@@ -53,6 +53,7 @@ func main() {
 	min := heap.Min()
 	for !heap.Empty() {
 		newMin := heap.DeleteMin()
+		println(newMin)
 		if min > newMin {
 			panic("nije dobar min")
 		}

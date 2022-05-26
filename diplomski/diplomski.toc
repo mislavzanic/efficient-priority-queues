@@ -1,0 +1,9 @@
+\babel@toc {croatian}{}\relax 
+\contentsline {chapter}{Sadr\v {z}aj}{iv}{section*.1}%
+\contentsline {chapter}{Uvod}{1}{chapter*.2}%
+\contentsline {chapter}{\chapternumberline {1}Fibonacci Heap}{3}{chapter.1}%
+\contentsline {chapter}{\chapternumberline {2}Brodalov Queue}{5}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Uvod}{5}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Opis ASP-a}{5}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Vodilja}{7}{section.2.3}%
+\contentsline {section}{\numberline {2.4}Opis implementacije}{7}{section.2.4}%
