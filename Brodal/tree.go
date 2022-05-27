@@ -121,6 +121,9 @@ func (this *tree) insertNode(child *node) (bool, error) {
 
 	rankInc := this.MbyIncRank(child.rank == this.RootRank())
 
+	if child.rank > this.RootRank() {
+		panic("fakkk")
+	}
 	if _, err := this.root.pushBackChild(child, this.childrenRank[child.rank]); err == nil {
 		if this.childrenRank[child.rank] == nil {
 			this.childrenRank[child.rank] = child

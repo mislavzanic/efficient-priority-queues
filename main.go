@@ -26,14 +26,20 @@ func main() {
 
 	for i := 5; i < 10; i++ {
 		heap.Insert(Brodal.ValType(i))
+		println(heap.Size())
 	}
 
 	for i := 5; i < 10; i++ {
 		heap.Insert(Brodal.ValType(-i))
+		println(heap.Size())
 	}
 
+
+
 	heap.DeleteMin()
+	println(heap.Size())
 	heap.DeleteMin()
+	println(heap.Size())
 	heap.DeleteMin()
 
 	for i := 5; i < 10; i++ {
@@ -50,10 +56,17 @@ func main() {
 		heap.Insert(Brodal.ValType(val))
 	}
 
+	size := heap.Size()
 	min := heap.Min()
 	for !heap.Empty() {
 		newMin := heap.DeleteMin()
-		println(newMin)
+		newSize := heap.Size()
+		if newSize + 1 != size {
+			println("velicine:", newSize, size)
+			panic("error")
+		}
+		size = newSize
+		// println(newMin)
 		if min > newMin {
 			panic("nije dobar min")
 		}

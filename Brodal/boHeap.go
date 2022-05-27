@@ -62,6 +62,25 @@ func (bh *BrodalHeap) Min() ValType {
 /////////////////////////////////DeleteMin////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
+func (bh *BrodalHeap) Size() int {
+	if bh.Empty() {
+		return 0
+	}
+
+	s := 1
+	for e := bh.getTree(1).Children().Front(); e != nil; e = e.Next() {
+		s += e.Value.(*node).Size()
+	}
+
+	if bh.tree2 != nil {
+		s += 1
+		for e := bh.getTree(2).Children().Front(); e != nil; e = e.Next() {
+			s += e.Value.(*node).Size()
+		}
+	}
+	return s
+}
+
 func (bh *BrodalHeap) DeleteMin() ValType {
 	min := bh.Min()
 
@@ -80,8 +99,8 @@ func (bh *BrodalHeap) DeleteMin() ValType {
 		}
 	}
 
-	newMin, other := bh.getNewMin()
 
+	newMin, other := bh.getNewMin()
 	trees := bh.getTree(1).RmRfRoot()
 	newMinV, newMinW := newMin.vList, newMin.wList
 	oldV, oldW := bh.getTree(1).vList(), bh.getTree(1).wList()
@@ -90,12 +109,22 @@ func (bh *BrodalHeap) DeleteMin() ValType {
 	bh.tree2 = nil
 
 	for e := trees.Back(); e != nil; e = e.Prev() {
+		for e.Value.(*node).rank > bh.getTree(1).RootRank() {
+			nodes := e.Value.(*node).DecRank()
+			for _, n := range nodes {
+				bh.insertNode(1, n)
+			}
+		}
 		bh.insertNode(1, e.Value.(*node))
 	}
 
-	for e := newMin.children.Front(); e != nil; e = e.Next() {
+
+	for e := newMin.children.Front(); e != nil; {
+		newE := e.Next()
 		bh.insertNode(1, e.Value.(*node))
+		e = newE
 	}
+
 
 	for e := oldV.Front(); e != nil; e = e.Next() {
 		bh.handleViolation(e.Value.(*node))

@@ -31,8 +31,10 @@
 % i onda \nas{Naslov ...}
 \usepackage{txfonts} % times new roman 
 
-% Paket graphicx sluzi za manipuliranje grafikom 
 \usepackage[pdftex]{graphicx} % ukoliko se koristi XeLaTeX onda je \usepackage[xetex]{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{positioning,matrix, arrows.meta, backgrounds}
+% Paket graphicx sluzi za manipuliranje grafikom
 % Paket amsmath je vec ukljucen
 % Dodatno definirane matematicke okoline:
 % teorem (okolina: thm), lema (okolina: lem), korolar (okolina: cor),
@@ -66,9 +68,9 @@
 % Tekst diplomskog ...
 
 % Diplomski rad treba poceti s uvodnim poglavljem  
-\begin{intro}
-...
-\end{intro}
+% \begin{intro}
+% ...
+% \end{intro}
 
 % \chapter[Naslov poglavlja u sadržaju][Kratki naslov poglavlja]{Naslov poglavlja}
 % % ukoliko naslov nije jako dugacak dovoljno je samo \chapter{Naslov poglavlja}
@@ -177,7 +179,7 @@
 % kao i jedna vrlo komplicirana formula koja slijedi iz \eqref{eq:jed1}
 % \[ \sum_{i=1}^{\infty}A_{x_1}\times A_{{\alpha}_2}\oslash\iint_{\Omega}x^2\ddagger\limsup_{n\in\N}\frac{\alpha+\theta+\gamma}{n^{\omega}}\;\;\text{je u stvari}\;\;\biguplus_{r\in\Q}\overline{\Xi_i \mathop\Theta_{\substack{j\in\C \\ j\ni i\Q}} \Upsilon^{k^j} \underset{\ast}{\Psi} \hslash\vert_{\{\alpha\}}}.\]
 
-\include{fibonacci_heap}
+% \include{fibonacci_heap}
 \include{brodal}
 % Na kraju diplomkog rada stavlja se  bibliografija
 % Najprije definiramo nacin prikazivanja bibliografije, u ovom slucaju verzija amsplain stila
@@ -192,18 +194,18 @@
 % I na koncu idu sazeci na hrvatskom i engleskom
 
 
-\begin{sazetak}
-Ukratko ...
-\end{sazetak}
+% \begin{sazetak}
+% Ukratko ...
+% \end{sazetak}
 
-\begin{summary}
-In this ...
-\end{summary}
+% \begin{summary}
+% In this ...
+% \end{summary}
 
 % te zivotopis
 
-\begin{cv}
-Dana ...
-\end{cv}
+% \begin{cv}
+% Dana ...
+% \end{cv}
 
 \end{document}

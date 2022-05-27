@@ -7,16 +7,45 @@
 
 \chapter{Brodalov Queue}
 
-\section{Uvod}
 Apstraktna struktura podataka prezentirana u ovom poglavlju zadovoljava asimptotske granice $O(1)$ za \texttt{FindMin}, \texttt{Meld}, \texttt{Insert} i \texttt{DecreaseKey}, te $O(\log n)$ za \texttt{DeleteMin}.
 U poglavlju 3.3 opisujem pomo\'{c}nu strukturu podataka potrebnu za realizaciju nekih ograni\v{c}enja Brodalovog reda.
 
-\section{Opis ASP-a}
-U ovom potpoglavlju navodim pravila koja Brodalov red treba po\v{s}tovati izmedu svake dvije operacije, dokazujem tvrdnje koje proizlaze iz tih pravila i obja\v{s}njavam okvirnu strukturu Brodalovog reda.
-Prioritetan red definiramo kao skup od dva stabla $T_{1}$ i $T_{2}$.
-\v{C}vorove korijene stabla $T_{i}$ ozna\v{c}avati \'{c}u sa $t_{i}$.
-Ideja iza 2 stabla je ta da $t_{1}$ bude najmanji element
-Dalje navodim invarijante koje struktura podataka treba zadovoljavati.
+\section{Osnovna svojstva}
+
+U ovom potpoglavlju navodimo invarijante koje struktura podataka treba zadovoljavati, a potom dajemo intuitivan opis invarijanti i dokaze nekih potrebnih tvrdnji.
+No prvo, moramo dati opis Brodalovog reda kako bi \v{c}itatelju invarijante imale ikakvog smilsa.
+
+Brodalov red definiramo kao skup od dva stabla $T_{1}$ i $T_{2}$.
+Svi \v{c}vorovi stabla sadr\v{z}e vrijednost i prirodni broj koji \'{c}emo zvati rang.
+
+Djeca \v{c}vora spremaju se u dvostruko vezanu listu.
+Svaki \v{c}vor ima pokaziva\v{c} na roditelja i na najljevije dijete.
+
+Ideja iza 2 stabla je ta da $t_{1}$ bude najmanji element kako bi \texttt{FindMin} mogao biti $O(1)$ u najgorem slu\v{c}aju, a $T_{2}$ da bude stablo ve\v{c}eg ranga pomo\v{c}u kojeg \texttt{Meld} mo\v{z}emo napravit u $O(1)$ u najgorem slu\v{c}aju.
+
+Tako\dj er, Brodalov red dopu\v{s}ta kr\v{s}enja tzv. \emph{min heap} svojstva.
+Takve \v{c}vorove dalje navodimo kao \emph{lo\v{s}e} \v{c}vorove.
+Kako je svaki lo\v{s} \v{c}vor, uz korijene stabla $T_{1}$ i $T_{2}$, kandidat za minimum, trebamo na\'{c}in za pratit takve \v{c}vorove.
+To posti\v{z}emo sa tzv. $V$ i $W$ skupovima.
+Svakom \v{c}voru $x$ Brodalovog reda pridru\v{z}ujemo njegove $W(x)$ i $V(x)$ skupove.
+Intuicija iza $V$ i $W$ je sljede\'{c}a.
+Svaki \v{c}vor koji ubacimo u red, a da on kr\v{s}i \emph{min heap} svojstvo ubacujemo u $V(t_{1})$ ili $W(t_{1})$.
+Intuitivno, za neki \v{c}vor Brodalovog reda $x$ vrijedi $(\forall y \in W(x) \cup V(x))(y \ge x)$.
+Zahtijevamo da $V(x) \cap W(x) = \emptyset$.
+Skup $V$ je za \v{c}vorove ``ve\v{c}eg'' ranga, a $W$ za \v{c}vorove ``manjeg'' ranga.
+
+$V$ i $W$ skupove tako\dj er implementiramo pomo\'{c}u dvostruko vezanih listi.
+$V(x)$ i $W(x)$ implementiramo tako da svakom \v{c}voru $x$ dodajemo 4 pokaziva\v{c}a, dva na prve \v{c}vorove u svojoj $V(x)$ i $W(x)$ listi i dva na prethodni i sljede\'{c}i element u $V$ ili $W$ listi u kojoj se on sam nalazi (ako se, naravno, nalazi u jednoj).
+Nove \v{c}vorove $V$ liste ubacijemo na po\v{c}etak liste, a nove \v{c}vorove $W$ liste ubacijemo tako da \v{c}vorovi istih rangova budu grupirani.\\
+Dakle, ako prilikom dodavanja novog \v{c}vora u $W$ ve\'{c} postoji \v{c}vor istog ranga u $W$, novi \v{c}vor dodamo iza njega.
+Ina\v{c}e, novi \v{c}vor gurnemo na po\v{c}etak ili kraj liste.
+To je potrebno kako bi smo mogli odr\v{z}avati jednu od invarijanti opisanu u~\ref{O_inv}.
+Ako \v{c}vor nekog ranga ne postoji u $W$, stavljamo \texttt{NULL} na to mjesto u nizu.
+
+Dalje navodimo 3 vrste invarijanti.
+Prva opisuje pridjeljivanje ranga \v{c}vorovima i tako utvr\dj uje strukturu stabla $T_{i}$.
+Druga opisuje strukturu skupova $V$ i $W$.
+Tre\'{c}a dodaje dodatna pravila na \v{c}vorove $t_{1}$ i $t_{2}$.
 
 \begin{defn}[Invarijante \v{c}vorova]\label{S_inv}
   Neka je $x$ \v{c}vor Brodalovog reda. Tada za \v{c}vor x trebaju vrijediti sljede\'{c}e invarijante:
@@ -25,16 +54,48 @@ Dalje navodim invarijante koje struktura podataka treba zadovoljavati.
     S2: $r(x) < r(p(x))$, \\
     S3: Ako $r(x) > 0$, onda $n_{r(x)-1}(x) \ge 2$, \\
     S4: $n_{i}(x) \in \{0,2,\ldots,7\}$, \\
-    S5: $T_{2} = \emptyset $ \bigskip ili \bigskip $r(t_{1}) \le r(t_{2})$.
+    S5: $T_{2} = \emptyset $ ili $r(t_{1}) \le r(t_{2})$.
   \end{myindentpar}
 \end{defn}
 
 S1 i S2 ka\v{z}u da je rang lista jednak 0 i da rang \v{c}vora $x$ strogo raste prema korijenu.
 S3 ka\v{z}e da \v{c}vor ranga $k > 0$ mora imat barem dvoje dijece ranga $k - 1$.
-S5 ka\v{z}e da je $T_{2}$ prazno stablo, ili ima rang ve\v{c}i od $T_{1}$
+S5 ka\v{z}e da je $T_{2}$ prazno stablo, ili ima rang ve\v{c}i od $T_{1}$.
 S4 ka\v{z}e da je broj djece ranga $i$ \v{c}vora $x$ konstantan i ne smije biti 1.
 Ne dopu\v{s}tamo da broj \v{c}vorova stabla bude 1 kako bi i dalje vrijedila invarijanta S3 nakon \v{s}to odre\v{z}emo dijecu najve\v{c}eg ranga nekog \v{c}vora. $n_{i}(x) \le 7$ je posljedica konstrukcije koju kasnije obja\v{s}njavamo.
+
+\begin{defn}[Invarijante strukture]\label{O_inv}
+  Neka je $w_{i}(x)$ broj \v{c}vorova u $W(x)$ ranga $i$.
+  \begin{myindentpar}{15pt}
+    O1: $t_{1} = \min T_{1} \cup T_{2}$, \\
+    O2: ako $y \in V(x) \cup W(x)$, onda $y \ge x$, \\
+    O3: ako $y \le p(y)$, onda $\exists x \ne y$ tako da $y \in W(x) \cup V(x)$, \\
+    O4: $w_{i}(x) \le 6$, \\
+    O5: ako $V(x) = (y_{|V(x)| - 1},\dotsc,y_{1},y_{0})$, onda $r(y_{i}) \ge \lfloor\frac{i}{\alpha}\rfloor$, za $i = 0,1,\dotsc,|V(x)| - 1$, gdje je $\alpha$ konstanta.
+  \end{myindentpar}
+\end{defn}
+
+O1 garantira da je $t_{1}$ minimalni element u redu.
+O2 ka\v{z}e da \v{c}vorovi po\v{s}tuju \emph{min heap} svojstvo s obzirom na $V$ i $W$ skupove kojima pripadaju.
+O3 ka\v{z}e da svi lo\v{s}i \v{c}vorovi pripadaju u $V$ ili $W$ skup.
+O4 i O5 ka\v{z}u da su veli\v{c}ine $V$ i $W$ $O(\log n)$.
+Micanjem \v{c}vorova iz $V$ ili $W$ ne kr\v{s}imo invarijante.
+
+\begin{defn}[Invarijante korijena]\label{R_inv}
+  Neka je x \v{c}vor Brodalovog reda. Tada za \v{c}vor x trebaju vrijediti sljede\'{c}e invarijante:
+  \begin{myindentpar}{15pt}
+    R1: $n_{i}(t_{j}) \in \{2,3,\dotsc,7\}$, za $i = 0,1,\dotsc,r(t_{j}) - 1$,\\
+    R2: $|V(t_{1})| \le \alpha r(t_{1})$, \\
+    R3: ako $y \in W(t_{1})$, onda $r(y) < r(t_{1})$.
+  \end{myindentpar}
+\end{defn}
+
+R1 garantira da korijeni $t_{1}$ i $t_{2}$ imaju dijecu svakog ranga.
+R2 ve\v{z}e veli\v{c}inu $V$ i $r(t_{1})$, pove\v{c}anjem $r(t_{1})$ dobivamo novih $\alpha$ mjesta u $V$.
+R3 ka\v{z}e da lo\v{s}i \v{c}vorovi iz $W(t_{1})$ moraju imat rang manji od $r(t_{1})$.\\
+Dalje dokazujemo neke od tvrdnji koje proizlaze iz gore navedenih pravila.
 Iz S1 i S3 slijedi sljede\'{c}a lema.
+One pokazuju vezu izme\dj u ranga \v{c}vora i veli\v{c}ine stabla.
 
 \begin{lem}\label{Exp_cv}
   Neka je $x$ \v{c}vor nekog stabla $T$ koje zadovoljava S1 i S3. Podstablo sa korijenom $x$, ranga $r(x)$ ima barem $2^{r(x)+1} - 1$ \v{c}vorova.
@@ -58,39 +119,79 @@ Iz S1 i S3 slijedi sljede\'{c}a lema.
 \end{proof}
 
 
-
-\begin{defn}[Invarijante strukture]\label{O_inv}
-  Neka je $w_{i}(x)$ broj \v{c}vorova u $W(x)$ ranga $i$.
-  \begin{myindentpar}{15pt}
-    O1: $t_{1} = \min T_{1} \cup T_{2}$, \\
-    O2: ako $y \in V(x) \cup W(x)$, onda $y \ge x$, \\
-    O3: ako $y \le p(y)$, onda $\exists x \ne y$ tako da $y \in W(x) \cup V(x)$, \\
-    O4: $w_{i}(x) \le 6$, \\
-    O5: ako $V(x) = (y_{|V(x)| - 1},\dotsc,y_{1},y_{0})$, onda $r(y_{i}) \ge \lfloor\frac{i}{\alpha}\rfloor$, za $i = 0,1,\dotsc,|V(x)| - 1$, gdje je $\alpha$ konstanta.
-  \end{myindentpar}
+Argumentirajmo jo\v{s} za\v{s}to O5 povla\'{c}i $|V(x)| \in O(\log n)$ za proizvoljan \v{c}vor Brodalovog reda.
+To slijedi iz \v{c}injenice da je najve\v{c}i rang u Brodalovom redu iz $O(\log n)$.
+Neka je $k \in \N$ najve\v{c}i rang nekog Brodalovog reda.
+Tada vrijedi $k \ge \lfloor\frac{|V(x)| - 1}{\alpha}\rfloor$.\\
+Sada mo\v{z}emo formalno definirati Brodalov red.
+\begin{defn}[Brodalov red]
+  Skup od dva stabla $T_{1}$ i $T_{2}$ koja zadovoljavaju invarijante iz~\ref{S_inv},~\ref{O_inv} i~\ref{R_inv} nazivamo Brodalovim redom.
 \end{defn}
 
-\begin{defn}[Invarijante korijena]\label{R_inv}
-  Neka je x \v{c}vor Brodalovog reda. Tada za \v{c}vor x trebaju vrijediti sljede\'{c}e invarijante:
-  \begin{myindentpar}{15pt}
-    R1: $n_{i}(t_{j}) \in \{2,3,\dotsc,7\}$, za $i = 0,1,\dotsc,r(t_{j}) - 1$,\\
-    R2: $|V(t_{1})| \le \alpha r(t_{1})$, \\
-    R3: ako $y \in W(t_{1})$, onda $r(y) < r(t_{1})$.
-  \end{myindentpar}
-\end{defn}
+Op\'{c}enito, odr\v{z}avanje invarijanti O4 i R1 nije trivijalno ako \v{z}elimo imati $O(1)$ ubacivanje \v{c}vorova u stablo i izbacivanje \v{c}vorova iz stabla.
+Zbog toga uvodimo pomo\'{c}nu strukturu podataka \emph{vodilju} (eng. \emph{guide}) koju opisujemo u~\ref{vodilja}.
 
-\section{Vodilja}
-U ovom dijelu opisujem pomo\v{c}nu apstraktnu strukturu podataka \emph{vodilji}. Probleme koje rije\v{s}avaju vodilje mo\v{z}e se opisati ovako.
+\section{Vodilja}\label{vodilja}
+U ovom dijelu opisujem pomo\v{c}nu apstraktnu strukturu podataka \emph{vodilju}.
+Vodilje \'{c}e nam pomagati u odr\v{z}avanju invarijanti O4 iz~\ref{O_inv} i R1 iz~\ref{R_inv}.
 
-\begin{defn}[Problem vodilje]
-  Pretpostavimo da imamo niz cijelih brojeva $x_{n},\ldots,x_{1}$ za koji \v{z}elimo da vrijedi invarijanta $x_{i} \le T, T \in \Z, i \in \{1,\ldots,n\}$.
-  Za svaki inkrement nekog od $x_{i}, i \in \{1,\ldots,n\}$ t.d. $x_{i} > T$ trebamo $O(1)$ operacija redukcije kojima ponovno uspostavljamo invarijantu.
-\end{defn}
+Problem koji rije\v{s}avaju vodilje mo\v{z}e se opisati ovako.
+Pretpostavimo da imamo niz cijelih brojeva $x_{n},\dotsc,x_{1}$ za koji \v{z}elimo da vrijedi $x_{i} \le T, i \in \{1,\dotsc,n\}$ za neku cjelobrojnu granicu $T$.
+Jedinu operaciju koju na nizu $x_{n},\dotsc,x_{1}$ mo\v{z}emo izvoditi je operacija \texttt{reduce(i)} koja smanjuje $x_{i}$ za najmanje 2 i pove\'{c}ava $x_{i+1}$ za najvi\v{s}e 1.
+Svaki se od $x_{i}$ mo\v{z}e ``prisilno'' pove\'{c}at, odnosno smanjiti za 1, ali za svaku takvu promijenu u nizu smijemo napraviti $O(1)$ \texttt{reduce} operacija kako bi odr\v{z}ali $x_{i} \le T$.
+Funkcija vodilje je re\v{c}i koje \texttt{reduce} operacije izvesti.
 
-\begin{defn}
-  Neka je $x_{n},\ldots,x_{1}$ proizvoljan niz cijelih brojeva.
-  Operacija redukcije nad $x_{i}, i \in \{1,\ldots,n-1\}$ definiramo kao dekrement $x_{i}$ za barem 2 i inkrement $x_{i+1}$ za najvi\v{s}e 1.
-  Za $x_{n}$, operaciju redukcije definiramo analogno, bez inkrementa sljede\v{c}eg elementa niza.
-\end{defn}
+Dalje opisujemo implementaciju vodilje.\\
+Vodilji pridru\v{z}ujemo niz cijelih brojeva $\overline{x_{n}},\dotsc,\overline{x_{1}}$ takav da vrijedi $x_{i} \le \overline{x_{i}} \in \{T-2,T-1,T\}$.
+Dokle god vrijedi $x_{i} \le \overline{x_{i}}$, ne trebamo pomo\'{c} vodilje.
+Pomo\'{c} vodilje trebamo kada pove\'{c}avamo $x_{i} = \overline{x_{i}}$.
+Npr. ako $\overline{x_{i}} = 6, x_{i} = 4$, tada $x_{i}$ mo\v{z}emo dva puta pove\'{c}ati bez da trebamo pomo\'{c} vodilje.\\
+Primjetite da $x_{i}$ mo\v{z}emo proizvoljno smanjivati, tj. ako vrijedi $x_{i} \le \overline{x_{i}}$, onda sigurno vrijedi $x_{i} - 1 \le \overline{x_{i}}$.\\
+U daljnjem opisivanju implementacije vodilje BSOMP da vrijedi $T = 2$, tj $\overline{x_{i}} \in \{0,1,2\}$ i da \texttt{reduce(i)} smanjuje $\overline{x_{i}}$ za 2 i pove\'{c}ava $\overline{x_{i+1}}$ za 1.\\
+Niz $\overline{x_{n}},\dotsc,\overline{x_{1}}$ vodilje dijelimo u \emph{blokove} oblika $21^{\beta}0$, $\beta \in \N$.
+Vodilja odr\v{z}ava invarijantu koja ka\v{z}e da broj 2 mora biti dio bloka, dok 1 i 0 ne moraju.
+Broj 2 nazivamo vo\dj om bloka.
+\begin{exa}
+  Primjer nekog niza sa blokovima koji zadovoljava prethodno opisane uvijete.
+  $$
+  1,\underline{2,1,1,0},1,1,\underline{2,0},\underline{2,0},1,0,\underline{2,1,0},0.
+  $$
+\end{exa}
+Za odr\v{z}avanje blokova koristimo dodatan niz pokaziva\'{c}a na pokaziva\'{c}e.
+Elementi niza koji ne pripadaju niti jednom bloku imaju pridru\v{z}en $\bot$.
+Elementi niza koji jesu u bloku imaju pokazuju na pokaziva\'{c} vo\dj e tog bloka.
+Razlog tome je dvojak:
+\begin{enumerate}
+  \item Za bilo koji element niza mo\v{z}emo u $O(1)$ vremenu odrediti nalazi li se u bloku i, ako se nalazi u bloku, vo\dj u bloka u kojem se nalazi.
+  \item U $O(1)$ vremenu uni\v{s}titi proizvoljan blok. Jednostavno pridru\v{z}imo $\bot$ bloku.
+\end{enumerate}
 
-\section{Opis implementacije}
+Dalje opisujemo operaciju \texttt{reduce(i)}.\\
+Razlikujemo nekoliko slu\v{c}ajeva:
+\begin{enumerate}
+  \item $d_{i+1} = 0$ i $d_{i+1}$ nije dio bloka. $d_{i+1} \leftarrow 1$ i uni\v{s}timo blok sa vo\dj om $d_{i}$.
+  \item $d_{i+1} = 0$ i $d_{i+1}$ je dio bloka. $d_{i+1} \leftarrow 1$ i uni\v{s}timo blok sa vo\dj om $d_{i}$ i dodamo $d_{i}$ bloku u kojem je i $d_{i+1}$.
+  \item $d_{i+1} = 1$. Uni\v{s}timo blok sa vo\dj om $d_{i}$, napravimo novi blok kojem je vo\dj a $d_{i+1}$ i dodamo mu $d_{i}$.
+\end{enumerate}
+
+Nakon opisane \texttt{reduce(i)} operacije, mo\v{z}emo opisati operaciju \texttt{forceIncrease(i)} kojom se izvr\v{s}ava ``prisilno'' pove\v{c}avanje $\overline{x_{i}}$.
+Razlikujemo nekoliko slu\v{c}ajeva:
+\begin{enumerate}
+  \item $d_{i} = 0$ i $d_{i}$ nije dio bloka. $d_{i} \leftarrow 1$.
+  \item $d_{i} = 0$ i $d_{i}$ je dio bloka. Napravi \texttt{reduce} na vo\dj i i $d_{i} \leftarrow 1$.
+  \item $d_{i} = 1$ i $d_{i}$ nije dio bloka. $d_{i} \leftarrow 2$ i napravi \texttt{reduce(i)}.
+  \item $d_{i} = 1$ i $d_{i}$ je dio bloka. Napravi \texttt{reduce} na vo\dj i tog bloka, $d_{i} \leftarrow 2$ i napravi \texttt{reduce(i)}.
+\end{enumerate}
+
+\begin{exa}
+  Jedan slu\v{c}aj operacije \texttt{forceIncrease}.
+  \begin{center}
+    \begin{tabular}{l}
+      $\underline{2,1,1,0},\underline{2,1,1,1,0}$\\
+      $\underline{2,1,1,0},\underline{2,2,1,1,0}$\qquad \texttt{forceIncrease(3)},\\
+      $\underline{2,1,1,1},\underline{0,2,1,1,0}$\qquad \texttt{reduce(4)},\\
+      $\underline{2,1,1,1},\underline{1,0,1,1,0}$\qquad \texttt{reduce(3)},\\
+      $\underline{2,1,1,1,1,0},1,1,0$\qquad ponovno uspostavi blokove.\\
+    \end{tabular}
+  \end{center}
+\end{exa}

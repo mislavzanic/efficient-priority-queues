@@ -34,6 +34,17 @@ func newNode(value ValType) *node {
 	return node
 }
 
+func (this *node) Size() int {
+	if this.rank == 0 {
+		return 1
+	}
+	s := 1
+	for e := this.children.Front(); e != nil; e = e.Next() {
+		s += e.Value.(*node).Size()
+	}
+	return s
+}
+
 func (this *node) ToString() string {
 	str := "\t\tValue:"
 	str += fmt.Sprint(this.value)
