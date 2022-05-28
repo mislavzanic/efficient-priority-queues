@@ -183,6 +183,8 @@ Razlikujemo nekoliko slu\v{c}ajeva:
   \item $d_{i} = 1$ i $d_{i}$ je dio bloka. Napravi \texttt{reduce} na vo\dj i tog bloka, $d_{i} \leftarrow 2$ i napravi \texttt{reduce(i)}.
 \end{enumerate}
 
+Iz gore navedenog je jasno da \emph{vodilja} u $O(1)$ u najgorem slu\v{c}aju mo\v{z}e odlu\v{c}iti koje \texttt{reduce} operacije izvesti.
+
 \begin{exa}
   Jedan slu\v{c}aj operacije \texttt{forceIncrease}.
   \begin{center}
@@ -195,3 +197,40 @@ Razlikujemo nekoliko slu\v{c}ajeva:
     \end{tabular}
   \end{center}
 \end{exa}
+
+\section{Operacije u stablu}
+
+Nakon opisa strukture Brodalovog reda i vodilje mo\v{z}emo krenut opisivati operacije u stablima $T_{j}$ potrebne kako bi implementirali funkcije prioritetnog reda.
+
+\subsection{Link i delink}
+
+Dvije najosnovnije operacije u stablima su tzv. link i delink stabla.
+Pretpostavimo da imamo 3 \v{c}vora $x_{1}, x_{2}, x_{3}$ jednakog ranga, i da niti jedan od njih nije $t_{i}$.
+BSOMP da je $x_{1}$ najmanji po vrijednosti od njih, minimum mo\v{z}emo saznati rade\'{c}i najvi\v{s}e 2 usporedbe.
+$x_{2}$ i $x_{3}$ mogu postati najljevija djeca $x_{1}$ i tako pove\'{c}ati rang od $x_{1}$ za 1.
+Time su zadovoljene invarijante S1-S5 i O1-O5.
+
+Primjetite da, iako smo rekli da niti jedan od 3 \v{c}vora u link operaciji ne smije biti $t_{i}$, nam operacija link daje odgovor na pitanje ``Kako dodati novi \v{c}vor u Brodalov red sa samo 2 \v{c}vora, a da sve invarijante vrijede?''.
+
+Operacija delink je malo kompliciranija. Pretpostavimo da imamo neko stablo kojemu je korijen $x$. Razlikujemo dva slu\v{c}aja:
+\begin{enumerate}
+  \item $x$ ima dvoje ili troje djece ranga $r(x) - 1$. To dvoje/troje djece odre\v{z}emo i pridru\v{z}imo $x$ rang najljevijeg djeteta plus 1. S4 povla\'{c}i da S3 i dalje vrijedi (definicija~\ref{S_inv}).
+  \item $x$ ima vi\v{s}e od troje djece ranga $r(x) - 1$. Dvoje djece odre\v{z}emo. $x$ i dalje ima rang $r(x)$. Sve invarijante i dalje vrijede.
+\end{enumerate}
+Delink stabla ranga $k$ uvijek rezultira sa dva ili 3 stabla ranga $k - 1$ i jednim stablom ranga manjeg ili jednakog $k$.
+
+\subsection{Operacije na djeci korjena}
+
+Dalje opisujemo kako dodavati i micati djecu korijena, a da i dalje vrijedi R1 (definicija~\ref{R_inv}).
+Za to su nam potrebne 4 vodilje, dvije za $t_{1}$ i dvije za $t_{2}$.
+Intuitivno, dodavanje \v{c}vora ranga $k$ je ekvivalentno operaciji \texttt{forceIncrease(k)}.
+Micanje je analogno (promatramo vodilju sa negativnim $T$).
+Dalje opisujemo postupak za $t_{1}$, konstrukcije za $t_{2}$ idu analogno.
+
+Kako bi mogli izvr\v{s}iti link i delink operacije u $O(1)$ na djeci korjena proizvoljnog ranga potreban nam je niz pokaziva\v{c}a na dijete svakog ranga korijena $t_{1}$.
+Zbog R1 (definicija~\ref{R_inv}) znamo da takva djeca postoje.
+
+Spomenuli smo da $t_{1}$ ima dvije vodilje. Jedna vodilja odr\v{z}ava $n_{i}(t_{1}) \le 7$, a druga $n_{i}(t_{1}) \ge 2$ za $i = 0,\dotsc,r(t_{1}) - 3$.
+Djecu ranga $r(t_{1}) - 1$ i $r(t_{1}) - 2$ izdvajamo i ru\v{c}no odr\v{z}avamo zbog me\dj usobne ovisnosti vodilje za gornju granicu i vodilje za donju granicu.
+Ta ovisnost dolazi do izra\v{z}aja prilikom malog broja \v{c}vorova u stablu ili pove\v{c}avanja ranga stabla.\\
+Brojevi sa kojima vodilja koja odr\v{z}ava gornju granicu broja djece su $\{5,6,7\}$, a $\{4,3,2\}$ su oni sa kojima raspola\v{z}e vodilja za donju granicu.
