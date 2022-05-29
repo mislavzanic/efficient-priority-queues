@@ -21,7 +21,8 @@ Svi \v{c}vorovi stabla sadr\v{z}e vrijednost i prirodni broj koji \'{c}emo zvati
 Djeca \v{c}vora spremaju se u dvostruko vezanu listu.
 Svaki \v{c}vor ima pokaziva\v{c} na roditelja i na najljevije dijete.
 
-Ideja iza 2 stabla je ta da $t_{1}$ bude najmanji element kako bi \texttt{FindMin} mogao biti $O(1)$ u najgorem slu\v{c}aju, a $T_{2}$ da bude stablo ve\v{c}eg ranga pomo\v{c}u kojeg \texttt{Meld} mo\v{z}emo napravit u $O(1)$ u najgorem slu\v{c}aju.
+Intuitivno, $t_{1}$ (korijen stabla $T_{1}$) \'{c}e uvijek biti najmanji element. Zbog toga je vrijeme izvr\v{s}avanja \texttt{FindMin} iz $O(1)$.
+Stablo $T_{2}$ je pomo\'{c}no stablo potrebno za odr\v{z}avanje pravila koja navodimo kasnije.
 
 Tako\dj er, Brodalov red dopu\v{s}ta kr\v{s}enja tzv. \emph{min heap} svojstva.
 Takve \v{c}vorove dalje navodimo kao \emph{lo\v{s}e} \v{c}vorove.
@@ -202,7 +203,7 @@ Iz gore navedenog je jasno da \emph{vodilja} u $O(1)$ u najgorem slu\v{c}aju mo\
 
 Nakon opisa strukture Brodalovog reda i vodilje mo\v{z}emo krenut opisivati operacije u stablima $T_{j}$ potrebne kako bi implementirali funkcije prioritetnog reda.
 
-\subsection{Link i delink}
+\subsection{Link i delink}\label{link_delink}
 
 Dvije najosnovnije operacije u stablima su tzv. link i delink stabla.
 Pretpostavimo da imamo 3 \v{c}vora $x_{1}, x_{2}, x_{3}$ jednakog ranga, i da niti jedan od njih nije $t_{i}$.
@@ -219,12 +220,10 @@ Operacija delink je malo kompliciranija. Pretpostavimo da imamo neko stablo koje
 \end{enumerate}
 Delink stabla ranga $k$ uvijek rezultira sa dva ili 3 stabla ranga $k - 1$ i jednim stablom ranga manjeg ili jednakog $k$.
 
-\subsection{Operacije na djeci korjena}
+\subsection{Operacije na djeci korjena}\label{insert_cut}
 
 Dalje opisujemo kako dodavati i micati djecu korijena, a da i dalje vrijedi R1 (definicija~\ref{R_inv}).
 Za to su nam potrebne 4 vodilje, dvije za $t_{1}$ i dvije za $t_{2}$.
-Intuitivno, dodavanje \v{c}vora ranga $k$ je ekvivalentno operaciji \texttt{forceIncrease(k)}.
-Micanje je analogno (promatramo vodilju sa negativnim $T$).
 Dalje opisujemo postupak za $t_{1}$, konstrukcije za $t_{2}$ idu analogno.
 
 Kako bi mogli izvr\v{s}iti link i delink operacije u $O(1)$ na djeci korjena proizvoljnog ranga potreban nam je niz pokaziva\v{c}a na dijete svakog ranga korijena $t_{1}$.
@@ -234,3 +233,78 @@ Spomenuli smo da $t_{1}$ ima dvije vodilje. Jedna vodilja odr\v{z}ava $n_{i}(t_{
 Djecu ranga $r(t_{1}) - 1$ i $r(t_{1}) - 2$ izdvajamo i ru\v{c}no odr\v{z}avamo zbog me\dj usobne ovisnosti vodilje za gornju granicu i vodilje za donju granicu.
 Ta ovisnost dolazi do izra\v{z}aja prilikom malog broja \v{c}vorova u stablu ili pove\v{c}avanja ranga stabla.\\
 Brojevi sa kojima vodilja koja odr\v{z}ava gornju granicu broja djece su $\{5,6,7\}$, a $\{4,3,2\}$ su oni sa kojima raspola\v{z}e vodilja za donju granicu.
+
+Dodavanje novog dijeteta ranga $k < r(t_{1}) - 2$ je ekvivalentno operaciji \texttt{forceIncrease(k)} na vodilji za gornju granicu.
+Vodilja nam vrati koje \texttt{reduce} operacije trebamo napraviti kako bi obnovili invarijante.
+\texttt{reduce(i)} operacija tu odgovara operaciji link na \v{c}vorovima ranga $i$, odnosno pove\v{c}a $n_{i+1}(t_{1})$ za 1 i smanji $n_{i}(t_{1})$ za 3.\\
+Operaciju link radimo samo kada je $n_{i}(t_{1}) = 7$ kako nebi utjecali na vodilju za donju granicu (ipak smanjujemo za 3).
+To implicira promjene u vodilji koju \v{c}emo opisati u~\ref{detalji_impl}.\\
+Ako \texttt{reduce} pove\v{c}a broj djece ranga $r(t_{1}) - 2$ ili $r(t_{1}) - 1$, napravimo link operaciju na njima i mo\v{z}da pove\v{c}amo rang od $t_{1}$.
+
+Micanje djece je sli\v{c}no, \texttt{reduce} operacija odgovara delink operaciji (po\v{s}to promatramo vodilju sa negativnom granicom $T$, pove\v{c}ati $\overline{x_{i}}$ za $k$ zna\v{c}i upravo odrezati mu $k$ djece).
+Dodatno stablo nastalo kao rezultat delink operacije sa rangom $l \in {0,\dotsc,k}$ se dodaje zasebno, nakon operacije delink, kao dijete $t_{1}$ postupkom opisanim gore.
+
+Situacija sa korijenom $t_{2}$ je sli\v{c}na.
+Razlika je ta \v{s}to je $t_{1}$ \v{c}vor najmanje vrijednosti, dok $t_{2}$ mo\v{z}e imat proizvoljnu vrijednost.
+Zbog te proizvoljne vrijednosti, gore opisane operacije mogu stvoriti nova kr\v{s}enja min heap svojstva koje nisu mogle nastat u $T_{1}$.
+Linking nikad ne stvara lo\v{s}e \v{c}vorove, a delinking mo\v{z}e stvoriti najvi\v{s}e 3 nove lo\v{s}a \v{c}vora.
+Lo\v{s}i \v{c}vorovi ranga ve\v{c}eg od $t_{1}$ su dodani u $V(t_{1})$. Kako bi O5 i R2 ostali zadovoljeni, trebamo garantirati da \'{c}e se rang $t_{1}$ pove\v{c}ati i da je $\alpha$ dovoljno velik.
+
+\subsection{Operacije koje smanjuju broj lo\v{s}ih \v{c}vorova}\label{rm_los}
+
+Dalje opisujemo operaciju s kojom mo\v{z}emo smanjiti broj \emph{potencijalnih lo\v{s}ih \v{c}vorova} iz $\bigcup_{y \in T_{1} \cup T_{2}}V(y) \cup W(y)$ za najmanje 1.
+
+Pretpostavimo da postoje dva potencijalna lo\v{s}a \v{c}vora $x_{1}$ i $x_{2}$ jednakog ranga $k < r(t_{1})$ i da $x_{1}$ i $x_{2}$ nisu djeca korijena.
+Prvo trebamo provjeriti jesu li $x_{1}$ i $x_{2}$ lo\v{s}i. Ako jedan od njih nije, maknemo ga iz skupa lo\v{s}ih \v{c}vorova kojem pripada.
+Ako su oba lo\v{s}a, radimo sljede\'{c}e.
+BSOMP da su $x_{1}$ i $x_{2}$ bra\'{c}a. S4 nam garantira da $x_{1}$ i $x_{2}$ oba imaju barem jednog brata.
+Ako $x_{1}$ i $x_{2}$ slu\v{c}ajno nisu bra\'{c}a, uz pretpostavku $p(x_{1}) \le p(x_{2})$, mo\v{z}emo zamijeniti podstablo kojem je korijen $x_{1}$ sa podstablom kojem je korijen brat od $x_{2}$.
+Tom zamijenom mo\v{z}emo samo smanjiti broj lo\v{s}ih \v{c}vorova (slijedi iz pretpostavke $p(x_{1}) \le p(x_{2})$ i \v{c}injenice da je $x_{1}$ lo\v{s}).
+
+Neka je $y$ roditelj od $x_{1}$ i $x_{2}$.
+Razlikujemo nekoliko slu\v{c}ajeva:
+\begin{enumerate}
+  \item $y$ ima vi\v{s}e od dvoje djece ranga $k$.
+        $x_{1}$ mo\v{z}em odrezat i ododat kao dijete od $t_{1}$ postupkom opisanim u~\ref{insert_cut}.
+  \item $y$ ima dvoje djece ranga $k$ i $r(y) > k+1$.
+        Odre\v{z}emo $x_{1}$ i $x_{2}$ i u\v{c}inimo ih djecom $t_{1}$.
+  \item $y$ ima dvoje djece ranga $k$ i $r(y) = k+1$.
+        Odre\v{z}emo $x_{1}$, $x_{2}$ i $y$. Zamijenimo $y$ sa dijetetom od $t_{1}$ ranga $k+1$ kojeg mo\v{z}emo odrezati postupkom opisanim u~\ref{insert_cut}.
+        Ako je $y$ dijete od $t_{1}$, odre\v{z}emo samo $y$.
+        Ako zamjena za $y$ postane lo\v{s} \v{c}vor, dodamo ga u $W(t_{1})$.
+        $x_{1}$, $x_{2}$ i $y$ u\v{c}inimo djecom $t_{1}$ postupkom opisanim u~\ref{insert_cut}.
+\end{enumerate}
+
+\subsection{Odr\v{z}avanje O4 i R2}
+
+Dalje opisujemo kako o\v{c}uvati invarijante O4 i R2.
+Jedini skupovi u koji dodajemo lo\v{s}e \v{c}vorove su $V(t_{1})$ i $W(t_{1})$ (\v{c}vorove ne mi\v{c}emo iz njih prilikom mijenjanja $t_{1}$).
+Lo\v{s}i \v{c}vorovi ranga ve\v{c}eg od $r(t_{1})$ dodajemo u $V(t_{1})$, a ina\v{c}e ih dodajemo u $W(t_{1})$.
+\v{C}vorove iz $W(t_{1})$ kontrolira vodilja (vodilja odr\v{z}ava O4), a \v{c}vorove iz $V(t_{1})$ kontroliramo ru\v{c}no.
+
+Nakon dodavanja \v{c}vora u $W(t_{1})$ radimo operacije koje nam vodilja ka\v{z}e da napravimo.
+\texttt{reduce(i)} operacija ovdje odgovara operaciji opisanoj u~\ref{rm_los}.
+\texttt{reduce(i)} operaciju izvr\v{s}avamo ako je broj lo\v{s}ih \v{c}vorova u $W(t_{1})$ ranga $i$ jednak 6 i barem 2 ta \v{c}vora nisu direktna djeca od $t_{2}$.
+Ako ih je vi\v{s}e od 4, odre\v{z}emo 2 \v{c}vora iz $W(t_{1})$ i u\v{c}inimo ih dobrom djecom od $t_{1}$
+Ne moramo se brinuti o vodilji za donju granicu zato \v{s}to postoje jo\v{s} 4 \v{c}vora ranga $i$ koji su djeca od $t_{2}$ (znamo zato \v{s}to su u $W(t_{1})$).
+
+R2 odr\v{z}avamo tako da pove\v{c}avamo rang od $t_{1}$ nakon svake operacije prioritetnog reda koju napravimo.
+To radimo tako da mi\v{c}emo konstantan broj djece od $t_{2}$ u $t_{1}$.
+Ako je $T_{2} = \emptyset$ pravilo $R2$ je trivijalno zadovoljeno jer je $V(t_{1}) = \emptyset$.
+Pretpostavimo $T_{2} \ne \emptyset$.
+Razlikujemo dva slu\v{c}aja:
+\begin{enumerate}
+  \item $r(t_{2}) \le r(t_{1}) + 1$.
+        Odre\v{z}emo djecu $t_{2}$ najve\v{c}eg ranga i dodamo ih pod $t_{1}$.
+        Nakon toga dodamo $t_{2}$ pod $t_{1}$.
+  \item $r(t_{2}) > r(t_{1}) + 1$.
+        Odre\v{z}emo djete $t_{2}$ ranga $r(t_{1}) + 1$.
+        Nakon toga napravimo operaciju delink nad tim \v{c}vorom i rezultiraju\v{c}a stabla dodamo pod $t_{1}$.
+\end{enumerate}
+Ovim se postupkom $r(t_{1})$ pove\v{c}a za najmanje 1.
+
+\section{Operacije prioritetnog reda}\label{impl}
+
+\section{Detalji implementacije}\label{detalji_impl}
+
+U ovom dijelu detaljnije opisujemo implementaciju i napominjemo neke detalje koje smo ispustili, a bitni su.
