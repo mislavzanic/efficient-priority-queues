@@ -56,6 +56,7 @@ func main() {
 		heap.Insert(Brodal.ValType(val))
 	}
 
+
 	size := heap.Size()
 	min := heap.Min()
 	for !heap.Empty() {
