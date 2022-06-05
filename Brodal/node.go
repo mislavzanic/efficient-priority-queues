@@ -135,15 +135,11 @@ func (this *node) getMinFromChildren() *node {
 }
 
 func (node *node) isBad() bool {
-	// if node.parent == nil {
-	// 	return true
-	// }
 	return node.parent != nil && node.value < node.parent.value
 }
 
 func (parent *node) removeChild(child *node) (*node, error) {
 	if value := parent.children.Remove(child.self); value != nil {
-		// child.removeSelfFromViolating()
 		child.parent = nil
 		parent.numOfChildren[child.rank]--
 		parent.mbyUpdateRank()
@@ -234,6 +230,9 @@ func (parent *node) mbyUpdateRank() {
 }
 
 func (parent *node) incRank() {
+	if parent.isBad() {
+		panic("fakfak")
+	}
 	parent.rank++
 	// update ako je cvor u nekoj W listi --> potrebne zasebne klase za V i W !!!!
 	for len(parent.numOfChildren) < int(parent.rank) {
@@ -301,6 +300,7 @@ func (node *node) link(xNode *node, yNode *node) (bool, error) {
 	}
 
 	if node.parent != nil {
+		panic("tusam")
 		node.parent.mbyUpdateRank()
 		node.parent.numOfChildren[node.rank]++
 		node.parent.numOfChildren[node.rank-1]--
@@ -335,20 +335,6 @@ func (parent *node) delink() ([]*node, error) {
 }
 
 func (this *node) removeSelfFromViolating() {
-
-	// bug kod parentHeap varijable -> ne resetiram ju
-	// switch this.parentViolatingList {
-	// case this.parentHeap.getTree(1).wList():
-	// 	err := this.parentHeap.t1s.removeFromW(this)
-	// 	if err != nil {
-	// 		panic(err.Error())
-	// 	}
-	// case nil:
-	// 	this.violatingSelf = nil
-	// default:
-	// 	this.parentViolatingList.Remove(this.violatingSelf)
-	// 	this.parentViolatingList = nil
-	// }
 
 	if this.parentViolatingList != nil {
 		this.parentViolatingList.Remove(this.violatingSelf)

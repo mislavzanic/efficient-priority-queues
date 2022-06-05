@@ -56,13 +56,13 @@ func (guide *guide) forceIncrease(index int, valArray *[]int, reduceValue int) [
 		guide.increase(index, &ops)
 
 		if guide.boundArray[index].fst == guide.upperBound-1 && (*guide.blocks[index]) != nil {
-			guide.fixUp(*guide.blocks[index], (*valArray)[index], reduceValue, &ops)
+			guide.fixUp(*guide.blocks[index], (*valArray)[(*guide.blocks[index]).snd], reduceValue, &ops)
 		} else if guide.boundArray[index].fst == guide.upperBound {
 			if (*guide.blocks[index]) == nil {
-				guide.fixUp(&guide.boundArray[index], (*valArray)[index], reduceValue, &ops)
+				guide.fixUp(&guide.boundArray[index], actualValue, reduceValue, &ops)
 			} else {
-				guide.fixUp(*guide.blocks[index], (*valArray)[index], reduceValue, &ops)
-				guide.fixUp(&guide.boundArray[index], (*valArray)[index], reduceValue, &ops)
+				guide.fixUp(*guide.blocks[index], (*valArray)[(*guide.blocks[index]).snd], reduceValue, &ops)
+				guide.fixUp(&guide.boundArray[index], actualValue, reduceValue, &ops)
 			}
 		}
 	} else {
@@ -71,21 +71,6 @@ func (guide *guide) forceIncrease(index int, valArray *[]int, reduceValue int) [
 
 	return ops
 }
-
-// func (guide *guide) forceDecrease(index int, actualValue int, reduceValue int) []action {
-// 	ops := []action{}
-// 	if actualValue > guide.upperBound - 2 {
-// 		guide.decrease(index, nil)
-// 		if guide.boundArray[index].fst == guide.upperBound-1 {
-// 			(*guide.blocks[index]) = nil
-// 		} else {
-// 			if (*guide.blocks[index]) != nil {
-// 				guide.fixUp(*guide.blocks[index], reduceValue, &ops)
-// 			}
-// 		}
-// 	}
-// 	return ops
-// }
 
 func (guide *guide) fixUp(pair *pair, actualValue int, reduceValue int, ops *[]action) {
 	(*guide.blocks[pair.snd]) = nil

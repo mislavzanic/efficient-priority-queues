@@ -71,6 +71,12 @@ func (this *tree1Struct) Update() {
 }
 
 func (this *tree1Struct) insertNewW(child *node) error {
+	if child.parentViolatingList == this.tree1.wList() {
+		return nil
+	} else if child.parentViolatingList != nil {
+		child.removeSelfFromViolating()
+	}
+
 	if this.numOfNodesInT1W[child.rank] == 0 {
 		child.violatingSelf = this.tree1.wList().PushFront(child)
 		this.rankPointersT1W[child.rank] = child
@@ -87,7 +93,6 @@ func (this *tree1Struct) insertNewW(child *node) error {
 }
 
 func (this *tree1Struct) removeFromW(child *node) error {
-	// moguci bug -> izbacivanje cvora iz W jer mu se rank povecava -> rank mu je >= ranka korijena pa se trigera error ispod
 	if child.rank >= len(this.numOfNodesInT1W) || child.rank >= len(this.rankPointersT1W) {
 
 		errMessage := "Rank of a node and lengths of lists of W set don't match, child rank: %d, child value: %f"
@@ -99,7 +104,7 @@ func (this *tree1Struct) removeFromW(child *node) error {
 			this.rankPointersT1W[child.rank] = child.violatingSelf.Next().Value.(*node)
 		}
 	}
-	this.tree1.wList().Remove(child.violatingSelf)
+	this.tree1.root.wList.Remove(child.violatingSelf)
 	this.numOfNodesInT1W[child.rank]--
 	child.removeSelfFromViolating()
 	return nil
@@ -111,7 +116,7 @@ func (this *tree1Struct) childrenWithParentInW(rank int, parent *node) ([]*node,
 		errMessage := "There are %d of W violations of rank %d, not 6"
 		return nil, nil, errors.New(fmt.Sprintf(errMessage, this.GetWNums(rank), rank))
 	}
-	for e := this.GetWPointers(rank).violatingSelf; e.Value.(*node).rank != rank; e = e.Next() {
+	for e := this.GetWPointers(rank).violatingSelf; e != nil && e.Value.(*node).rank == rank; e = e.Next() {
 
 		if e.Value.(*node).rank != rank {
 			errMessage := "Missmatching ranks: %d requested, %d got"
@@ -125,5 +130,12 @@ func (this *tree1Struct) childrenWithParentInW(rank int, parent *node) ([]*node,
 		}
 	}
 
+	if len(parentChildren) + len(otherChildren) != 6 {
+		f := this.GetWPointers(rank).violatingSelf
+		for e := f; e != nil && e.Value.(*node).rank != rank; e = e.Next() {
+			println(e.Value.(*node).rank)
+		}
+		panic("tusam")
+	}
 	return parentChildren, otherChildren, nil
 }

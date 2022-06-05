@@ -124,6 +124,7 @@ func (this *tree) insertNode(child *node) (bool, error) {
 	if child.rank > this.RootRank() {
 		panic("fakkk")
 	}
+
 	if _, err := this.root.pushBackChild(child, this.childrenRank[child.rank]); err == nil {
 		if this.childrenRank[child.rank] == nil {
 			this.childrenRank[child.rank] = child
@@ -165,6 +166,11 @@ func (tree *tree) cutOffNode(child *node) (*node, error) {
 	}
 	tree.parentHeap.mbyRemoveFromViolating(child)
 
+	for f := tree.parentHeap.getTree(1).wList().Front(); f != nil; f = f.Next() {
+		if f.Value.(*node) == child {
+			panic("tusam")
+		}
+	}
 	return child, err
 }
 
