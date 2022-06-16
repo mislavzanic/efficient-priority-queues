@@ -3,7 +3,7 @@ package Brodal
 import "container/list"
 
 
-func getMinValTree(t1s1 *tree1Struct, t1s2 *tree1Struct) (*tree1Struct, *tree1Struct) {
+func getMinValTree[T BoNumber](t1s1 *tree1Struct[T], t1s2 *tree1Struct[T]) (*tree1Struct[T], *tree1Struct[T]) {
 	if t1s1 == nil || t1s2 == nil {
 		panic("One of the trees is nil")
 	}
@@ -15,14 +15,14 @@ func getMinValTree(t1s1 *tree1Struct, t1s2 *tree1Struct) (*tree1Struct, *tree1St
 	}
 }
 
-func getMaxTree(trees ...*tree) (*tree, []*tree) {
+func getMaxTree[T BoNumber](trees ...*tree[T]) (*tree[T], []*tree[T]) {
 	if len(trees) == 0 {
 		panic("There are no trees")
 	}
 
 	maxTree := trees[0]
 	maxTreeIndex := 0
-	newTrees := [](*tree){}
+	newTrees := [](*tree[T]){}
 
 	for i, tree := range trees {
 		if tree != nil {
@@ -39,7 +39,7 @@ func getMaxTree(trees ...*tree) (*tree, []*tree) {
 	return maxTree, append(newTrees[:maxTreeIndex],  newTrees[maxTreeIndex+1:]...)
 }
 
-func mbySwapTree(ptr1 *tree, ptr2 *tree, cond bool) (*tree, *tree) {
+func mbySwapTree[T BoNumber](ptr1 *tree[T], ptr2 *tree[T], cond bool) (*tree[T], *tree[T]) {
 	if cond {
 		temp := ptr1
 		ptr1 = ptr2
@@ -48,7 +48,7 @@ func mbySwapTree(ptr1 *tree, ptr2 *tree, cond bool) (*tree, *tree) {
 	return ptr1, ptr2
 }
 
-func getMinNode(xNode *node, yNode *node) (*node, *node) {
+func getMinNode[T BoNumber](xNode *node[T], yNode *node[T]) (*node[T], *node[T]) {
 	if xNode == nil { return yNode, xNode }
 	if yNode == nil { return xNode, yNode }
 
@@ -58,23 +58,23 @@ func getMinNode(xNode *node, yNode *node) (*node, *node) {
 	return yNode, xNode
 }
 
-func getMinNodeFrom3(xNode *node, yNode *node, zNode *node) (*node, *node, *node) {
+func getMinNodeFrom3[T BoNumber](xNode *node[T], yNode *node[T], zNode *node[T]) (*node[T], *node[T], *node[T]) {
 	minNode, otherNode := getMinNode(xNode, yNode)
 	minNode, otherOtherNode := getMinNode(minNode, zNode)
 	return minNode, otherNode, otherOtherNode
 }
 
-func mbySwapNode(ptr1 *node, ptr2 *node, cond bool) {
+func mbySwapNode[T BoNumber](ptr1 *node[T], ptr2 *node[T], cond bool) {
 	if cond {
 		temp := *ptr1
 		*ptr1 = *ptr2
 		*ptr2 = temp
 	}
 }
-func getMinFromList(list *list.List) *list.Element {
+func getMinFromList[T BoNumber](list *list.List) *list.Element {
 	minVal := list.Front()
 	for e := list.Front(); e != nil; e = e.Next() {
-		if e.Value.(*node).value < minVal.Value.(*node).value {
+		if e.Value.(*node[T]).value < minVal.Value.(*node[T]).value {
 			minVal = e
 		}
 	}

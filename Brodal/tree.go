@@ -17,27 +17,27 @@ const UPPER_BOUND int = 7
 const LOWER_BOUND int = -2
 const GUIDE_BOUND int = 6
 
-type tree struct {
-	root            *node
+type tree[T BoNumber] struct {
+	root            *node[T]
 	id              uint
-	childrenRank    []*node
+	childrenRank    []*node[T]
 	upperBoundGuide *guide
 	lowerBoundGuide *guide
-	parentHeap      *BrodalHeap
+	parentHeap      *BrodalHeap[T]
 }
 
-func newTree(value ValType, treeIndex uint, pH *BrodalHeap) *tree {
-	return &tree{
+func newTree[T BoNumber](value T, treeIndex uint, pH *BrodalHeap[T]) *tree[T] {
+	return &tree[T]{
 		root:            newNode(value),
 		id:              treeIndex,
-		childrenRank:    []*node{},
+		childrenRank:    []*node[T]{},
 		upperBoundGuide: newGuide(UPPER_BOUND),
 		lowerBoundGuide: newGuide(LOWER_BOUND),
 		parentHeap: pH,
 	}
 }
 
-func (this *tree) ToString() string {
+func (this *tree[T]) ToString() string {
 	str := this.root.ToString()
 	str += "\t" + this.upperBoundGuide.ToString()
 	str += "\t" + this.lowerBoundGuide.ToString()
@@ -49,19 +49,19 @@ func (this *tree) ToString() string {
 	return str + "\n"
 }
 
-func (this *tree) RootRank() int {
+func (this *tree[T]) RootRank() int {
 	return this.root.rank
 }
 
-func (this *tree) RootValue() ValType {
+func (this *tree[T]) RootValue() T {
 	return this.root.value
 }
 
-func (this *tree) SetRootValue(newValue ValType) {
+func (this *tree[T]) SetRootValue(newValue T) {
 	this.root.SetValue(newValue)
 }
 
-func (this *tree) NumOfRootChildren(rank int) int {
+func (this *tree[T]) NumOfRootChildren(rank int) int {
 	if rank < 0 {
 		return -1
 	}
@@ -71,7 +71,7 @@ func (this *tree) NumOfRootChildren(rank int) int {
 	return this.root.numOfChildren[rank]
 }
 
-func (this *tree) ChildOfRank(rank int) *node {
+func (this *tree[T]) ChildOfRank(rank int) *node[T] {
 	if child, err := this.childOfRank(rank); err != nil {
 		panic(fmt.Sprint(err.Error()))
 	} else {
@@ -79,7 +79,7 @@ func (this *tree) ChildOfRank(rank int) *node {
 	}
 }
 
-func (this *tree) childOfRank(rank int) (*node, error) {
+func (this *tree[T]) childOfRank(rank int) (*node[T], error) {
 	if rank < this.RootRank() {
 		return this.childrenRank[rank], nil
 
@@ -88,32 +88,32 @@ func (this *tree) childOfRank(rank int) (*node, error) {
 	}
 }
 
-func (this *tree) vList() *list.List {
+func (this *tree[T]) vList() *list.List {
 	return this.root.vList
 }
 
-func (this *tree) wList() *list.List {
+func (this *tree[T]) wList() *list.List {
 	return this.root.wList
 }
 
-func (tree *tree) Children() *list.List {
+func (tree *tree[T]) Children() *list.List {
 	return tree.root.children
 }
 
-func (tree *tree) RmRfRoot() *list.List {
+func (tree *tree[T]) RmRfRoot() *list.List {
 	children := tree.Children()
 	for e := children.Front(); e != nil; e = e.Next() {
-		e.Value.(*node).parent = nil
+		e.Value.(*node[T]).parent = nil
 	}
 	tree.childrenRank = nil
 	return children
 }
 
-func (tree *tree) LeftChild() *node {
+func (tree *tree[T]) LeftChild() *node[T] {
 	return tree.root.LeftChild()
 }
 
-func (this *tree) insertNode(child *node) (bool, error) {
+func (this *tree[T]) insertNode(child *node[T]) (bool, error) {
 
 	if len(this.childrenRank) < child.rank {
 		panic("preveliko je")
@@ -135,7 +135,7 @@ func (this *tree) insertNode(child *node) (bool, error) {
 	}
 }
 
-func (this *tree) InsertNodes(children ...*node) {
+func (this *tree[T]) InsertNodes(children ...*node[T]) {
 	for _, n := range children {
 		if _, err := this.insertNode(n); err != nil {
 			panic(fmt.Sprint(err.Error()))
@@ -143,12 +143,12 @@ func (this *tree) InsertNodes(children ...*node) {
 	}
 }
 
-func (tree *tree) cutOffNode(child *node) (*node, error) {
+func (tree *tree[T]) cutOffNode(child *node[T]) (*node[T], error) {
 
 	if child == tree.childrenRank[child.rank] {
 		tree.childrenRank[child.rank] = nil
 		if tree.root.children.Len() > 1 {
-			if tree.root.children.Back().Value.(*node) != child {
+			if tree.root.children.Back().Value.(*node[T]) != child {
 				if rb, err := child.rightBrother(); err == nil {
 					if rb.rank == child.rank {
 						tree.childrenRank[child.rank] = rb
@@ -167,15 +167,15 @@ func (tree *tree) cutOffNode(child *node) (*node, error) {
 	tree.parentHeap.mbyRemoveFromViolating(child)
 
 	for f := tree.parentHeap.getTree(1).wList().Front(); f != nil; f = f.Next() {
-		if f.Value.(*node) == child {
+		if f.Value.(*node[T]) == child {
 			panic("tusam")
 		}
 	}
 	return child, err
 }
 
-func (this *tree) RemoveChildren(rank int, num int) []*node {
-	nodes := []*node{}
+func (this *tree[T]) RemoveChildren(rank int, num int) []*node[T] {
+	nodes := []*node[T]{}
 	for i := 0; i < num; i++ {
 		if n, err := this.cutOffNode(this.childrenRank[rank]); err == nil {
 			nodes = append(nodes, n)
@@ -186,11 +186,11 @@ func (this *tree) RemoveChildren(rank int, num int) []*node {
 	return nodes
 }
 
-func (this *tree) RemoveChild(rank int) *node {
+func (this *tree[T]) RemoveChild(rank int) *node[T] {
 	return this.RemoveChildren(rank, 1)[0]
 }
 
-func (tree *tree) Delink() []*node {
+func (tree *tree[T]) Delink() []*node[T] {
 	if nodes, err := tree.root.delink(); err == nil {
 		tree.childrenRank[tree.RootRank()-1] = tree.LeftChild()
 		return nodes
@@ -199,14 +199,14 @@ func (tree *tree) Delink() []*node {
 	}
 }
 
-func (this *tree) MbyIncRank(condition bool) bool {
+func (this *tree[T]) MbyIncRank(condition bool) bool {
 	if condition {
 		this.incRank()
 	}
 	return condition
 }
 
-func (this *tree) incRank() {
+func (this *tree[T]) incRank() {
 	this.root.incRank()
 
 	if len(this.childrenRank) > this.RootRank()-1 {
@@ -221,7 +221,7 @@ func (this *tree) incRank() {
 	}
 }
 
-func (this *tree) DecRank() []*node {
+func (this *tree[T]) DecRank() []*node[T] {
 	if nodes, err := this.root.decRank(); err != nil {
 		panic(err.Error())
 	} else {
@@ -232,7 +232,7 @@ func (this *tree) DecRank() []*node {
 	}
 }
 
-func (tree *tree) AskGuide(rank int, numOfChildren int, insert bool) []action {
+func (tree *tree[T]) AskGuide(rank int, numOfChildren int, insert bool) []action {
 	lbReduceVal := 2
 	if tree.childrenRank[rank+1].numOfChildren[rank] == 3 {
 		lbReduceVal = 3
@@ -247,7 +247,7 @@ func (tree *tree) AskGuide(rank int, numOfChildren int, insert bool) []action {
 	return tree.lowerBoundGuide.forceIncrease(rank, &tree.root.numOfChildren, lbReduceVal)
 }
 
-func (tree *tree) Link(rank int) *node {
+func (tree *tree[T]) Link(rank int) *node[T] {
 
 	nodes := tree.RemoveChildren(rank, 3)
 	minNode, nodeX, nodeY := getMinNodeFrom3(nodes[0], nodes[1], nodes[2])

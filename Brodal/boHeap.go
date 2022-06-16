@@ -7,54 +7,55 @@ import (
 	"math"
 )
 
+type BoNumber interface {
+        int | int8 | int16 | int32 | int64 | float32 | float64
+}
 
-type ValType float64
-
-type BrodalHeap struct {
-	t1s            *tree1Struct
-	tree2          *tree
+type BrodalHeap[T BoNumber] struct {
+	t1s            *tree1Struct[T]
+	tree2          *tree[T]
 	violationNodes *list.List
 }
 
 const ALPHA int = 10
 
-func NewEmptyHeap() *BrodalHeap {
-	return &BrodalHeap{
-		t1s:            newEmptyT1S(),
+func NewEmptyHeap[T BoNumber]() *BrodalHeap[T] {
+	return &BrodalHeap[T]{
+		t1s:            newEmptyT1S[T](),
 		tree2:          nil,
 		violationNodes: list.New(),
 	}
 }
 
-func NewHeap(value ValType) *BrodalHeap {
-	bh := NewEmptyHeap()
+func NewHeap[T BoNumber](value T) *BrodalHeap[T] {
+	bh := NewEmptyHeap[T]()
 	bh.t1s = newT1S(value, bh)
 	return bh
 }
 
-func (bh *BrodalHeap) getTree(index int) *tree {
+func (bh *BrodalHeap[T]) getTree(index int) *tree[T] {
 	if index == 1 {
 		return bh.t1s.GetTree()
 	}
 	return bh.tree2
 }
 
-func (bh *BrodalHeap) ToString() string {
-	if bh.Empty() { return "" }
+// func (bh *BrodalHeap[T]) toString() string {
+// 	if bh.Empty() { return "" }
 
-	str := "Tree1:\n" + bh.getTree(1).ToString()
-	if bh.getTree(2) != nil {
-		str += "Tree2:\n" + bh.getTree(2).ToString()
-	}
+// 	str := "Tree1:\n" + bh.getTree(1).ToString()
+// 	if bh.getTree(2) != nil {
+// 		str += "Tree2:\n" + bh.getTree(2).ToString()
+// 	}
 
-	return str
-}
+// 	return str
+// }
 
-func (bh *BrodalHeap) Empty() bool {
+func (bh *BrodalHeap[T]) Empty() bool {
 	return bh.getTree(1) == nil
 }
 
-func (bh *BrodalHeap) Min() ValType {
+func (bh *BrodalHeap[T]) Min() T {
 	return bh.getTree(1).RootValue()
 }
 
@@ -62,26 +63,26 @@ func (bh *BrodalHeap) Min() ValType {
 /////////////////////////////////DeleteMin////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-func (bh *BrodalHeap) Size() int {
-	if bh.Empty() {
-		return 0
-	}
+// func (bh *BrodalHeap[T]) size() int {
+// 	if bh.Empty() {
+// 		return 0
+// 	}
 
-	s := 1
-	for e := bh.getTree(1).Children().Front(); e != nil; e = e.Next() {
-		s += e.Value.(*node).Size()
-	}
+// 	s := 1
+// 	for e := bh.getTree(1).Children().Front(); e != nil; e = e.Next() {
+// 		s += e.Value.(*node[T]).Size()
+// 	}
 
-	if bh.tree2 != nil {
-		s += 1
-		for e := bh.getTree(2).Children().Front(); e != nil; e = e.Next() {
-			s += e.Value.(*node).Size()
-		}
-	}
-	return s
-}
+// 	if bh.tree2 != nil {
+// 		s += 1
+// 		for e := bh.getTree(2).Children().Front(); e != nil; e = e.Next() {
+// 			s += e.Value.(*node[T]).Size()
+// 		}
+// 	}
+// 	return s
+// }
 
-func (bh *BrodalHeap) DeleteMin() ValType {
+func (bh *BrodalHeap[T]) DeleteMin() T {
 	min := bh.Min()
 
 	if bh.getTree(2) != nil {
@@ -94,7 +95,7 @@ func (bh *BrodalHeap) DeleteMin() ValType {
 		}
 	} else {
 		if bh.getTree(1).RootRank() == 0 {
-			bh.t1s = newEmptyT1S()
+			bh.t1s = newEmptyT1S[T]()
 			return min
 		}
 	}
@@ -109,40 +110,40 @@ func (bh *BrodalHeap) DeleteMin() ValType {
 	bh.tree2 = nil
 
 	for e := trees.Back(); e != nil; e = e.Prev() {
-		if e.Value.(*node) == newMin {
+		if e.Value.(*node[T]) == newMin {
 			continue
 		}
-		for e.Value.(*node).rank > bh.getTree(1).RootRank() {
-			nodes := e.Value.(*node).DecRank()
+		for e.Value.(*node[T]).rank > bh.getTree(1).RootRank() {
+			nodes := e.Value.(*node[T]).DecRank()
 			for _, n := range nodes {
 				bh.insertNode(1, n)
 			}
 		}
-		bh.insertNode(1, e.Value.(*node))
+		bh.insertNode(1, e.Value.(*node[T]))
 	}
 
 
 	for e := newMin.children.Front(); e != nil; {
 		newE := e.Next()
-		bh.insertNode(1, e.Value.(*node))
+		bh.insertNode(1, e.Value.(*node[T]))
 		e = newE
 	}
 
 
 	for e := oldV.Front(); e != nil; e = e.Next() {
-		bh.handleViolation(e.Value.(*node))
+		bh.handleViolation(e.Value.(*node[T]))
 	}
 
 	for e := oldW.Front(); e != nil; e = e.Next() {
-		bh.handleViolation(e.Value.(*node))
+		bh.handleViolation(e.Value.(*node[T]))
 	}
 
 	for e := newMinV.Front(); e != nil; e = e.Next() {
-		bh.handleViolation(e.Value.(*node))
+		bh.handleViolation(e.Value.(*node[T]))
 	}
 
 	for e := newMinW.Front(); e != nil; e = e.Next() {
-		bh.handleViolation(e.Value.(*node))
+		bh.handleViolation(e.Value.(*node[T]))
 	}
 
 	bh.handleViolation(other)
@@ -152,8 +153,8 @@ func (bh *BrodalHeap) DeleteMin() ValType {
 	}
 
 	for e := bh.getTree(1).wList().Front(); e != nil; {
-		if e.Next().Value.(*node).rank == e.Value.(*node).rank {
-			bh.reduceViolation(e.Value.(*node), e.Next().Value.(*node))
+		if e.Next().Value.(*node[T]).rank == e.Value.(*node[T]).rank {
+			bh.reduceViolation(e.Value.(*node[T]), e.Next().Value.(*node[T]))
 		} else {
 			e = e.Next()
 		}
@@ -162,7 +163,7 @@ func (bh *BrodalHeap) DeleteMin() ValType {
 	return min
 }
 
-func (bh *BrodalHeap) DecreaseKey(child *node, newValue ValType) {
+func (bh *BrodalHeap[T]) DecreaseKey(child *node[T], newValue T) {
 	if newValue < bh.Min() {
 		child.value = bh.Min()
 		bh.getTree(1).SetRootValue(newValue)
@@ -172,12 +173,12 @@ func (bh *BrodalHeap) DecreaseKey(child *node, newValue ValType) {
 	bh.handleViolation(child)
 }
 
-func (bh *BrodalHeap) Delete(child *node) {
-	bh.DecreaseKey(child, ValType(math.Inf(-1)))
+func (bh *BrodalHeap[T]) Delete(child *node[T]) {
+	bh.DecreaseKey(child, T(math.Inf(-1)))
 	bh.DeleteMin()
 }
 
-func (bh *BrodalHeap) Insert(value ValType) {
+func (bh *BrodalHeap[T]) Insert(value T) {
 	bh.Meld(NewHeap(value))
 }
 
@@ -185,7 +186,8 @@ func (bh *BrodalHeap) Insert(value ValType) {
 ///////////////////////////////// Meld ///////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-func (bh *BrodalHeap) Meld(otherHeap *BrodalHeap) {
+func (bh *BrodalHeap[T]) Meld(pqInterface interface{}) {
+	otherHeap := pqInterface.(*BrodalHeap[T])
 	if bh.Empty() {
 		bh.t1s = otherHeap.t1s
 		bh.tree2 = otherHeap.tree2
@@ -242,16 +244,16 @@ func (bh *BrodalHeap) Meld(otherHeap *BrodalHeap) {
 
 }
 
-func (bh *BrodalHeap) insertNode(treeIndex int, child *node) {
+func (bh *BrodalHeap[T]) insertNode(treeIndex int, child *node[T]) {
 	bh.heapAction(treeIndex, child, true)
 }
 
-func (bh *BrodalHeap) cutOffNode(treeIndex int, child *node) *node {
+func (bh *BrodalHeap[T]) cutOffNode(treeIndex int, child *node[T]) *node[T] {
 	bh.heapAction(treeIndex, child, false)
 	return child
 }
 
-func (bh *BrodalHeap) heapAction(treeIndex int, child *node, insert bool) {
+func (bh *BrodalHeap[T]) heapAction(treeIndex int, child *node[T], insert bool) {
 	if child.rank < bh.getTree(treeIndex).RootRank()-2 {
 		bh.lowRankAction(treeIndex, child, insert)
 	} else {
@@ -262,13 +264,13 @@ func (bh *BrodalHeap) heapAction(treeIndex int, child *node, insert bool) {
 	bh.updateHighRank(treeIndex, bh.getTree(treeIndex).RootRank()-1)
 }
 
-func (bh *BrodalHeap) lowRankAction(treeIndex int, child *node, insert bool) {
+func (bh *BrodalHeap[T]) lowRankAction(treeIndex int, child *node[T], insert bool) {
 	actionsInc := bh.getTree(treeIndex).AskGuide(child.rank, bh.getTree(treeIndex).NumOfRootChildren(child.rank)+1, insert)
 	// bh.handleActions(treeIndex, append(actionsInc, actionsDec...), child)
 	bh.handleActions(treeIndex, actionsInc, child)
 }
 
-func (bh *BrodalHeap) highRankAction(treeIndex int, child *node, insert bool) {
+func (bh *BrodalHeap[T]) highRankAction(treeIndex int, child *node[T], insert bool) {
 	if insert {
 		if _, err := bh.getTree(treeIndex).insertNode(child); err != nil {
 			panic(err.Error())
@@ -281,7 +283,7 @@ func (bh *BrodalHeap) highRankAction(treeIndex int, child *node, insert bool) {
 	bh.handleViolation(child)
 }
 
-func (bh *BrodalHeap) handleActions(treeIndex int, actions []action, child *node) {
+func (bh *BrodalHeap[T]) handleActions(treeIndex int, actions []action, child *node[T]) {
 	for _, act := range actions {
 		switch op := act.op; op {
 		case Reduce:
@@ -292,7 +294,7 @@ func (bh *BrodalHeap) handleActions(treeIndex int, actions []action, child *node
 	}
 }
 
-func (bh *BrodalHeap) doReduceAction(treeIndex int, guideBound int, rank int) {
+func (bh *BrodalHeap[T]) doReduceAction(treeIndex int, guideBound int, rank int) {
 	switch guideBound {
 	case UPPER_BOUND:
 		bh.linkNodes(treeIndex, rank)
@@ -311,7 +313,7 @@ func (bh *BrodalHeap) doReduceAction(treeIndex int, guideBound int, rank int) {
 	}
 }
 
-func (bh *BrodalHeap) doDefaultAction(treeIndex int, guideBound int, child *node) {
+func (bh *BrodalHeap[T]) doDefaultAction(treeIndex int, guideBound int, child *node[T]) {
 	switch guideBound {
 	case UPPER_BOUND:
 		if _, err := bh.getTree(treeIndex).insertNode(child); err != nil {
@@ -332,14 +334,14 @@ func (bh *BrodalHeap) doDefaultAction(treeIndex int, guideBound int, child *node
 	}
 }
 
-func (bh *BrodalHeap) linkNodes(treeIndex int, rank int) {
+func (bh *BrodalHeap[T]) linkNodes(treeIndex int, rank int) {
 	minNode := bh.getTree(treeIndex).Link(rank)
 	bh.handleViolation(minNode)
 	bh.handleViolation(minNode.LeftChild())
 	bh.handleViolation(minNode.LeftChild().RightBrother())
 }
 
-func (bh *BrodalHeap) delinkNodes(treeIndex int, rank int) (*node, []*node) {
+func (bh *BrodalHeap[T]) delinkNodes(treeIndex int, rank int) (*node[T], []*node[T]) {
 	child := bh.getTree(treeIndex).RemoveChild(rank)
 	bh.handleViolation(child)
 	nodes, err := child.delink()
@@ -350,7 +352,7 @@ func (bh *BrodalHeap) delinkNodes(treeIndex int, rank int) (*node, []*node) {
 	return child, nodes
 }
 
-func (bh *BrodalHeap) delink(treeIndex int) []*node {
+func (bh *BrodalHeap[T]) delink(treeIndex int) []*node [T]{
 	nodes := bh.getTree(treeIndex).Delink()
 	for _, n := range nodes {
 		bh.handleViolation(n)
@@ -358,7 +360,7 @@ func (bh *BrodalHeap) delink(treeIndex int) []*node {
 	return nodes
 }
 
-func (bh *BrodalHeap) updateHighRank(treeIndex int, rank int) {
+func (bh *BrodalHeap[T]) updateHighRank(treeIndex int, rank int) {
 	if rank < 0 {
 		return
 	}
@@ -401,7 +403,7 @@ func (bh *BrodalHeap) updateHighRank(treeIndex int, rank int) {
 ///////////////////////////Violation Handling/////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-func (bh *BrodalHeap) mbyAddViolation(child *node) error {
+func (bh *BrodalHeap[T]) mbyAddViolation(child *node[T]) error {
 	if !child.isBad() {
 		return nil
 	}
@@ -426,7 +428,7 @@ func (bh *BrodalHeap) mbyAddViolation(child *node) error {
 	return nil
 }
 
-func (bh *BrodalHeap) mbyRemoveFromViolating(notBad *node) error {
+func (bh *BrodalHeap[T]) mbyRemoveFromViolating(notBad *node[T]) error {
 	if notBad.isBad() {
 		return nil
 	}
@@ -455,7 +457,7 @@ func (bh *BrodalHeap) mbyRemoveFromViolating(notBad *node) error {
 	return nil
 }
 
-func (bh *BrodalHeap) addToV(child *node) error {
+func (bh *BrodalHeap[T]) addToV(child *node[T]) error {
 	if child.violatingSelf != nil {
 		switch child.parentViolatingList {
 		case bh.getTree(1).wList():
@@ -473,7 +475,7 @@ func (bh *BrodalHeap) addToV(child *node) error {
 	return nil
 }
 
-func (bh *BrodalHeap) createAlphaSpace() {
+func (bh *BrodalHeap[T]) createAlphaSpace() {
 	if bh.getTree(2) == nil || bh.getTree(1).vList().Len() <= ALPHA*bh.getTree(1).RootRank() {
 		return
 	}
@@ -501,18 +503,18 @@ func (bh *BrodalHeap) createAlphaSpace() {
 	bh.insertNode(1, newChild)
 }
 
-func (bh *BrodalHeap) addToW(child *node) error {
+func (bh *BrodalHeap[T]) addToW(child *node[T]) error {
 	actions := bh.t1s.GetWGuide().forceIncrease(child.rank, &bh.t1s.numOfNodesInT1W, 2)
 	bh.handleActions(1, actions, child)
 	return nil
 }
 
-func (bh *BrodalHeap) removeFromW(child *node) error {
+func (bh *BrodalHeap[T]) removeFromW(child *node[T]) error {
 	err := bh.t1s.removeFromW(child)
 	return err
 }
 
-func (bh *BrodalHeap) reduceW(rank int) error {
+func (bh *BrodalHeap[T]) reduceW(rank int) error {
 	t2Children, others, err := bh.t1s.childrenWithParentInW(rank, bh.getTree(2).root)
 	if err != nil {
 		return err
@@ -535,19 +537,19 @@ func (bh *BrodalHeap) reduceW(rank int) error {
 			}
 		}
 	} else {
-		bh.reduceViolation(others[0], others[1])
+		// bh.reduceViolation(others[0], others[1])
+		bh.rmViolatingNode(others[0], nil)
+		bh.rmViolatingNode(others[1], nil)
 	}
 	return nil
 }
 
-func (bh *BrodalHeap) insertNewW(child *node) error {
+func (bh *BrodalHeap[T]) insertNewW(child *node[T]) error {
 	return bh.t1s.insertNewW(child)
 }
 
-func (bh *BrodalHeap) reduceViolation(x1 *node, x2 *node) error {
+func (bh *BrodalHeap[T]) reduceViolation(x1 *node[T], x2 *node[T]) error {
 	if !x1.isBad() || !x2.isBad() {
-		// bh.handleViolation(x1)
-		// bh.handleViolation(x2)
 		bh.mbyRemoveFromViolating(x1)
 		bh.mbyRemoveFromViolating(x2)
 	} else {
@@ -566,7 +568,7 @@ func (bh *BrodalHeap) reduceViolation(x1 *node, x2 *node) error {
 	return nil
 }
 
-func (bh *BrodalHeap) rmViolatingNode(x1 *node, x2 *node) error {
+func (bh *BrodalHeap[T]) rmViolatingNode(x1 *node[T], x2 *node[T]) error {
 
 	if x1.parent == nil || x1.parent == bh.getTree(1).root || x1.parent == bh.getTree(1).root {
 		errMessage := "Node has invalid parents, node rank: %d, node value: %f"
@@ -624,13 +626,13 @@ func (bh *BrodalHeap) rmViolatingNode(x1 *node, x2 *node) error {
 	return nil
 }
 
-func (bh *BrodalHeap) handleViolation(child *node) {
+func (bh *BrodalHeap[T]) handleViolation(child *node[T]) {
 	bh.violationNodes.PushBack(child)
 }
 
-func (bh *BrodalHeap) updateViolations() error {
+func (bh *BrodalHeap[T]) updateViolations() error {
 	for violation := bh.violationNodes.Front(); violation != nil; violation = violation.Next() {
-		err := bh.updateViolation(violation.Value.(*node))
+		err := bh.updateViolation(violation.Value.(*node[T]))
 		if err != nil {
 			return err
 		}
@@ -639,7 +641,7 @@ func (bh *BrodalHeap) updateViolations() error {
 	return nil
 }
 
-func (bh *BrodalHeap) updateViolation(violation *node) error {
+func (bh *BrodalHeap[T]) updateViolation(violation *node[T]) error {
 	if !violation.isBad() {
 		if violation.violatingSelf != nil {
 			err := bh.mbyRemoveFromViolating(violation)
@@ -658,21 +660,21 @@ func (bh *BrodalHeap) updateViolation(violation *node) error {
 	return nil
 }
 
-func (bh *BrodalHeap) moveT2ToT1() {
+func (bh *BrodalHeap[T]) moveT2ToT1() {
 	child := bh.getTree(2).Children().Back()
 	for bh.getTree(2).Children().Len() > 0 {
-		_, err := bh.getTree(2).cutOffNode(child.Value.(*node))
+		_, err := bh.getTree(2).cutOffNode(child.Value.(*node[T]))
 		if err != nil {
 			panic(err.Error())
 		}
-		bh.insertNode(1, child.Value.(*node))
+		bh.insertNode(1, child.Value.(*node[T]))
 		child = bh.getTree(2).Children().Back()
 	}
 	bh.insertNode(1, bh.getTree(2).root)
 	bh.tree2 = nil
 }
 
-func (bh *BrodalHeap) getNewMin() (*node, *node) {
+func (bh *BrodalHeap[T]) getNewMin() (*node[T], *node[T]) {
 	minW := bh.getTree(1).root.getMinFromW()
 	minV := bh.getTree(1).root.getMinFromV()
 	minSubTree := bh.getTree(1).root.getMinFromChildren()

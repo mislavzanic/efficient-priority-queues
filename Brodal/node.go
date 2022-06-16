@@ -6,14 +6,14 @@ import (
 	"fmt"
 )
 
-type node struct {
-	value ValType
+type node[T BoNumber] struct {
+	value T
 	rank  int
 
 	self          *list.Element
 	violatingSelf *list.Element
 
-	parent        *node
+	parent        *node[T]
 	children      *list.List
 	numOfChildren []int
 
@@ -23,8 +23,8 @@ type node struct {
 	parentViolatingList *list.List
 }
 
-func newNode(value ValType) *node {
-	node := new(node)
+func newNode[T BoNumber](value T) *node[T] {
+	node := new(node[T])
 	node.value = value
 	node.rank = 0
 	node.children = list.New()
@@ -34,18 +34,18 @@ func newNode(value ValType) *node {
 	return node
 }
 
-func (this *node) Size() int {
+func (this *node[T]) Size() int {
 	if this.rank == 0 {
 		return 1
 	}
 	s := 1
 	for e := this.children.Front(); e != nil; e = e.Next() {
-		s += e.Value.(*node).Size()
+		s += e.Value.(*node[T]).Size()
 	}
 	return s
 }
 
-func (this *node) ToString() string {
+func (this *node[T]) ToString() string {
 	str := "\t\tValue:"
 	str += fmt.Sprint(this.value)
 	str += "\n\t\tRank:"
@@ -56,20 +56,20 @@ func (this *node) ToString() string {
 	}
 	str += "\n\t\tChildren:\n"
 	for e := this.children.Front(); e != nil; e = e.Next() {
-		str += e.Value.(*node).ToString()
+		str += e.Value.(*node[T]).ToString()
 	}
 	return str + "\n"
 }
 
-func (this *node) Leaf() bool {
+func (this *node[T]) Leaf() bool {
 	return this.children == nil || this.children.Len() == 0
 }
 
-func (this *node) SetValue(newValue ValType) {
+func (this *node[T]) SetValue(newValue T) {
 	this.value = newValue
 }
 
-func (parent *node) LeftChild() *node {
+func (parent *node[T]) LeftChild() *node[T] {
 	if n, err := parent.leftChild(); err == nil {
 		return n
 	} else {
@@ -77,30 +77,29 @@ func (parent *node) LeftChild() *node {
 	}
 }
 
-func (parent *node) leftChild() (*node, error) {
+func (parent *node[T]) leftChild() (*node[T], error) {
 	if parent.Leaf() {
 		return nil, errors.New("Node doesn't have any children")
 	}
-	return parent.children.Front().Value.(*node), nil
+	return parent.children.Front().Value.(*node[T]), nil
 }
 
-func (this *node) LeftBrother() *node {
+func (this *node[T]) LeftBrother() *node[T] {
 	if n, err := this.leftBrother(); err == nil {
 		return n
 	} else {
 		return nil
-		// panic(fmt.Sprint("%w", err))
 	}
 }
 
-func (this *node) leftBrother() (*node, error) {
+func (this *node[T]) leftBrother() (*node[T], error) {
 	if this.self.Prev() == nil {
 		return nil, errors.New(fmt.Sprintf("Node with rank = %d, value = %f, doesn't have a left brother", this.rank, this.value))
 	}
-	return this.self.Prev().Value.(*node), nil
+	return this.self.Prev().Value.(*node[T]), nil
 }
 
-func (this *node) RightBrother() *node {
+func (this *node[T]) RightBrother() *node[T] {
 	if n, err := this.rightBrother(); err == nil {
 		return n
 	} else {
@@ -109,36 +108,36 @@ func (this *node) RightBrother() *node {
 	}
 }
 
-func (this *node) rightBrother() (*node, error) {
+func (this *node[T]) rightBrother() (*node[T], error) {
 	if this.self.Next() == nil {
 		return nil, errors.New(fmt.Sprintf("Node with rank = %d, value = %f, doesn't have a left brother", this.rank, this.value))
 	}
-	return this.self.Next().Value.(*node), nil
+	return this.self.Next().Value.(*node[T]), nil
 }
 
-func (this *node) getMinFromW() *node {
+func (this *node[T]) getMinFromW() *node[T] {
 	if this.wList.Len() == 0 {
 		return nil
 	}
-	return getMinFromList(this.wList).Value.(*node)
+	return getMinFromList[T](this.wList).Value.(*node[T])
 }
 
-func (this *node) getMinFromV() *node {
+func (this *node[T]) getMinFromV() *node[T] {
 	if this.vList.Len() == 0 {
 		return nil
 	}
-	return getMinFromList(this.vList).Value.(*node)
+	return getMinFromList[T](this.vList).Value.(*node[T])
 }
 
-func (this *node) getMinFromChildren() *node {
-	return getMinFromList(this.children).Value.(*node)
+func (this *node[T]) getMinFromChildren() *node[T] {
+	return getMinFromList[T](this.children).Value.(*node[T])
 }
 
-func (node *node) isBad() bool {
+func (node *node[T]) isBad() bool {
 	return node.parent != nil && node.value < node.parent.value
 }
 
-func (parent *node) removeChild(child *node) (*node, error) {
+func (parent *node[T]) removeChild(child *node[T]) (*node[T], error) {
 	if value := parent.children.Remove(child.self); value != nil {
 		child.parent = nil
 		parent.numOfChildren[child.rank]--
@@ -150,8 +149,8 @@ func (parent *node) removeChild(child *node) (*node, error) {
 	return nil, errors.New(fmt.Sprintf(errorMsg, child.rank, child.value, parent.rank, parent.value))
 }
 
-func (parent *node) removeFirstChild() (*node, error) {
-	child := parent.children.Front().Value.(*node)
+func (parent *node[T]) removeFirstChild() (*node[T], error) {
+	child := parent.children.Front().Value.(*node[T])
 
 	if parent.rank-1 != child.rank {
 		return nil, errors.New(fmt.Sprintf("Parent rank %d and child rank %d don't match", parent.rank, child.rank))
@@ -160,15 +159,15 @@ func (parent *node) removeFirstChild() (*node, error) {
 	return parent.removeChild(child)
 }
 
-func (parent *node) pushBackChild(child *node, newBrother *node) (bool, error) {
+func (parent *node[T]) pushBackChild(child *node[T], newBrother *node[T]) (bool, error) {
 	return parent.addBrother(child, newBrother, true)
 }
 
-func (parent *node) pushFrontChild(child *node, newBrother *node) (bool, error) {
+func (parent *node[T]) pushFrontChild(child *node[T], newBrother *node[T]) (bool, error) {
 	return parent.addBrother(child, newBrother, false)
 }
 
-func (parent *node) addBrother(child *node, newBrother *node, left bool) (bool, error) {
+func (parent *node[T]) addBrother(child *node[T], newBrother *node[T], left bool) (bool, error) {
 	if parent.rank == child.rank {
 		return false, errors.New("Increase rank of parent first")
 	}
@@ -198,8 +197,8 @@ func (parent *node) addBrother(child *node, newBrother *node, left bool) (bool, 
 	return parent.value > child.value, nil
 }
 
-func (this *node) swapBrothers(other *node) error {
-	var brother *node = nil
+func (this *node[T]) swapBrothers(other *node[T]) error {
+	var brother *node[T] = nil
 
 	if err1 := other.setIfNoErrors(brother, other.leftBrother); err1 != nil {
 		if err2 := other.setIfNoErrors(brother, other.rightBrother); err2 != nil {
@@ -218,18 +217,18 @@ func (this *node) swapBrothers(other *node) error {
 	return nil
 }
 
-func (parent *node) mbyUpdateRank() {
+func (parent *node[T]) mbyUpdateRank() {
 	if parent.children.Len() == 0 {
 		parent.rank = 0
 	} else {
-		parent.rank = parent.children.Front().Value.(*node).rank + 1
+		parent.rank = parent.children.Front().Value.(*node[T]).rank + 1
 		for parent.rank > len(parent.numOfChildren) {
 			parent.numOfChildren = append(parent.numOfChildren, 0)
 		}
 	}
 }
 
-func (parent *node) incRank() {
+func (parent *node[T]) incRank() {
 	if parent.isBad() {
 		panic("fakfak")
 	}
@@ -240,13 +239,13 @@ func (parent *node) incRank() {
 	}
 }
 
-func (this *node) decRank() ([]*node, error) {
+func (this *node[T]) decRank() ([]*node[T], error) {
 
 	if this.rank == 0 {
 		return nil, errors.New(fmt.Sprintf("Node with value %f is of rank 0", this.value))
 	}
 
-	nodes, currRank := []*node{}, this.rank
+	nodes, currRank := []*node[T]{}, this.rank
 	for this.rank == currRank {
 		if child, err := this.removeChild(this.LeftChild()); err != nil {
 			return nil, err
@@ -258,7 +257,7 @@ func (this *node) decRank() ([]*node, error) {
 	return nodes, nil
 }
 
-func (this *node) DecRank() []*node {
+func (this *node[T]) DecRank() []*node[T] {
 	if nodes, err := this.decRank(); err != nil {
 		panic(err.Error())
 	} else {
@@ -266,7 +265,7 @@ func (this *node) DecRank() []*node {
 	}
 }
 
-func (node *node) link(xNode *node, yNode *node) (bool, error) {
+func (node *node[T]) link(xNode *node[T], yNode *node[T]) (bool, error) {
 
 	if node.rank != xNode.rank || node.rank != yNode.rank {
 		return false, errors.New(fmt.Sprintf("Node ranks don't match, %d, %d, %d", node.rank, xNode.rank, yNode.rank))
@@ -310,7 +309,7 @@ func (node *node) link(xNode *node, yNode *node) (bool, error) {
 
 }
 
-func (parent *node) delink() ([]*node, error) {
+func (parent *node[T]) delink() ([]*node[T], error) {
 	if node1, err := parent.removeFirstChild(); err == nil {
 		if node2, err := parent.removeFirstChild(); err == nil {
 			if node1 == node2 {
@@ -319,13 +318,13 @@ func (parent *node) delink() ([]*node, error) {
 
 			if parent.numOfChildren[node1.rank] == 1 {
 				if node3, err := parent.removeFirstChild(); err == nil {
-					return []*node{node1, node2, node3}, nil
+					return []*node[T]{node1, node2, node3}, nil
 				} else {
 					return nil, err
 				}
 			}
 
-			return []*node{node1, node2}, nil
+			return []*node[T]{node1, node2}, nil
 		} else {
 			return nil, err
 		}
@@ -334,7 +333,7 @@ func (parent *node) delink() ([]*node, error) {
 	}
 }
 
-func (this *node) removeSelfFromViolating() {
+func (this *node[T]) removeSelfFromViolating() {
 
 	if this.parentViolatingList != nil {
 		this.parentViolatingList.Remove(this.violatingSelf)
@@ -343,7 +342,7 @@ func (this *node) removeSelfFromViolating() {
 	this.violatingSelf = nil
 }
 
-func (this *node) setIfNoErrors(setThis *node, method func() (*node, error)) error {
+func (this *node[T]) setIfNoErrors(setThis *node[T], method func() (*node[T], error)) error {
 	if n, err := method(); err == nil {
 		setThis = n
 		return err

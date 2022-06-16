@@ -5,35 +5,35 @@ import (
 	"fmt"
 )
 
-type tree1Struct struct {
-	tree1           *tree
+type tree1Struct[T BoNumber] struct {
+	tree1           *tree[T]
 	numOfNodesInT1W []int
-	rankPointersT1W []*node
+	rankPointersT1W []*node[T]
 	t1GuideW        *guide
 	lastKnownRank   int
 }
 
-func newT1S(value ValType, parent *BrodalHeap) *tree1Struct {
-	return &tree1Struct{
+func newT1S[T BoNumber](value T, parent *BrodalHeap[T]) *tree1Struct[T] {
+	return &tree1Struct[T]{
 		tree1:           newTree(value, 1, parent),
 		numOfNodesInT1W: []int{},
-		rankPointersT1W: []*node{},
+		rankPointersT1W: []*node[T]{},
 		t1GuideW:        newGuide(6),
 		lastKnownRank:   0,
 	}
 }
 
-func newEmptyT1S() *tree1Struct {
-	return &tree1Struct{
+func newEmptyT1S[T BoNumber]() *tree1Struct[T] {
+	return &tree1Struct[T]{
 		tree1:           nil,
 		numOfNodesInT1W: []int{},
-		rankPointersT1W: []*node{},
+		rankPointersT1W: []*node[T]{},
 		t1GuideW:        newGuide(6),
 		lastKnownRank:   0,
 	}
 }
 
-func (this *tree1Struct) GetTree() (*tree) {
+func (this *tree1Struct[T]) GetTree() (*tree[T]) {
 	if this.tree1 != nil && this.tree1.root.rank != this.lastKnownRank {
 		this.lastKnownRank = this.tree1.root.rank
 		this.Update()
@@ -41,7 +41,7 @@ func (this *tree1Struct) GetTree() (*tree) {
 	return this.tree1
 }
 
-func (this *tree1Struct) GetWGuide() *guide {
+func (this *tree1Struct[T]) GetWGuide() *guide {
 	if this.tree1.root.rank != this.lastKnownRank {
 		this.lastKnownRank = this.tree1.root.rank
 		this.Update()
@@ -49,15 +49,15 @@ func (this *tree1Struct) GetWGuide() *guide {
 	return this.t1GuideW
 }
 
-func (this *tree1Struct) GetWPointers(index int) *node {
+func (this *tree1Struct[T]) GetWPointers(index int) *node[T] {
 	return this.rankPointersT1W[index]
 }
 
-func (this *tree1Struct) GetWNums(index int) int {
+func (this *tree1Struct[T]) GetWNums(index int) int {
 	return this.numOfNodesInT1W[index]
 }
 
-func (this *tree1Struct) Update() {
+func (this *tree1Struct[T]) Update() {
 	for this.tree1.RootRank() > len(this.numOfNodesInT1W) {
 		this.numOfNodesInT1W = append(this.numOfNodesInT1W, 0)
 	}
@@ -70,7 +70,7 @@ func (this *tree1Struct) Update() {
 	this.t1GuideW.remove(this.tree1.RootRank())
 }
 
-func (this *tree1Struct) insertNewW(child *node) error {
+func (this *tree1Struct[T]) insertNewW(child *node[T]) error {
 	if child.parentViolatingList == this.tree1.wList() {
 		return nil
 	} else if child.parentViolatingList != nil {
@@ -92,7 +92,7 @@ func (this *tree1Struct) insertNewW(child *node) error {
 	return nil
 }
 
-func (this *tree1Struct) removeFromW(child *node) error {
+func (this *tree1Struct[T]) removeFromW(child *node[T]) error {
 	if child.rank >= len(this.numOfNodesInT1W) || child.rank >= len(this.rankPointersT1W) {
 
 		errMessage := "Rank of a node and lengths of lists of W set don't match, child rank: %d, child value: %f"
@@ -100,8 +100,8 @@ func (this *tree1Struct) removeFromW(child *node) error {
 
 	} else if this.rankPointersT1W[child.rank] == child {
 		this.rankPointersT1W[child.rank] = nil
-		if  this.tree1.wList().Back() != child.violatingSelf && child.violatingSelf.Next().Value.(*node).rank == child.rank {
-			this.rankPointersT1W[child.rank] = child.violatingSelf.Next().Value.(*node)
+		if  this.tree1.wList().Back() != child.violatingSelf && child.violatingSelf.Next().Value.(*node[T]).rank == child.rank {
+			this.rankPointersT1W[child.rank] = child.violatingSelf.Next().Value.(*node[T])
 		}
 	}
 	this.tree1.root.wList.Remove(child.violatingSelf)
@@ -110,30 +110,30 @@ func (this *tree1Struct) removeFromW(child *node) error {
 	return nil
 }
 
-func (this *tree1Struct) childrenWithParentInW(rank int, parent *node) ([]*node, []*node, error) {
-	parentChildren, otherChildren := []*node{}, []*node{}
+func (this *tree1Struct[T]) childrenWithParentInW(rank int, parent *node[T]) ([]*node[T], []*node[T], error) {
+	parentChildren, otherChildren := []*node[T]{}, []*node[T]{}
 	if this.GetWNums(rank) != 6 {
 		errMessage := "There are %d of W violations of rank %d, not 6"
 		return nil, nil, errors.New(fmt.Sprintf(errMessage, this.GetWNums(rank), rank))
 	}
-	for e := this.GetWPointers(rank).violatingSelf; e != nil && e.Value.(*node).rank == rank; e = e.Next() {
+	for e := this.GetWPointers(rank).violatingSelf; e != nil && e.Value.(*node[T]).rank == rank; e = e.Next() {
 
-		if e.Value.(*node).rank != rank {
+		if e.Value.(*node[T]).rank != rank {
 			errMessage := "Missmatching ranks: %d requested, %d got"
-			return nil, nil, errors.New(fmt.Sprintf(errMessage, rank, e.Value.(*node).rank))
+			return nil, nil, errors.New(fmt.Sprintf(errMessage, rank, e.Value.(*node[T]).rank))
 		}
 
-		if e.Value.(*node).parent == parent {
-			parentChildren = append(parentChildren, e.Value.(*node))
+		if e.Value.(*node[T]).parent == parent {
+			parentChildren = append(parentChildren, e.Value.(*node[T]))
 		} else {
-			otherChildren = append(otherChildren, e.Value.(*node))
+			otherChildren = append(otherChildren, e.Value.(*node[T]))
 		}
 	}
 
 	if len(parentChildren) + len(otherChildren) != 6 {
 		f := this.GetWPointers(rank).violatingSelf
-		for e := f; e != nil && e.Value.(*node).rank != rank; e = e.Next() {
-			println(e.Value.(*node).rank)
+		for e := f; e != nil && e.Value.(*node[T]).rank != rank; e = e.Next() {
+			println(e.Value.(*node[T]).rank)
 		}
 		panic("tusam")
 	}
