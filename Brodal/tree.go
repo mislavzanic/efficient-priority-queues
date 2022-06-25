@@ -17,7 +17,7 @@ const UPPER_BOUND int = 7
 const LOWER_BOUND int = -2
 const GUIDE_BOUND int = 6
 
-type tree[T BoNumber] struct {
+type tree[T Number] struct {
 	root            *node[T]
 	id              uint
 	childrenRank    []*node[T]
@@ -26,7 +26,7 @@ type tree[T BoNumber] struct {
 	parentHeap      *BrodalHeap[T]
 }
 
-func newTree[T BoNumber](value T, treeIndex uint, pH *BrodalHeap[T]) *tree[T] {
+func newTree[T Number](value T, treeIndex uint, pH *BrodalHeap[T]) *tree[T] {
 	return &tree[T]{
 		root:            newNode(value),
 		id:              treeIndex,

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type tree1Struct[T BoNumber] struct {
+type tree1Struct[T Number] struct {
 	tree1           *tree[T]
 	numOfNodesInT1W []int
 	rankPointersT1W []*node[T]
@@ -13,7 +13,7 @@ type tree1Struct[T BoNumber] struct {
 	lastKnownRank   int
 }
 
-func newT1S[T BoNumber](value T, parent *BrodalHeap[T]) *tree1Struct[T] {
+func newT1S[T Number](value T, parent *BrodalHeap[T]) *tree1Struct[T] {
 	return &tree1Struct[T]{
 		tree1:           newTree(value, 1, parent),
 		numOfNodesInT1W: []int{},
@@ -23,7 +23,7 @@ func newT1S[T BoNumber](value T, parent *BrodalHeap[T]) *tree1Struct[T] {
 	}
 }
 
-func newEmptyT1S[T BoNumber]() *tree1Struct[T] {
+func newEmptyT1S[T Number]() *tree1Struct[T] {
 	return &tree1Struct[T]{
 		tree1:           nil,
 		numOfNodesInT1W: []int{},

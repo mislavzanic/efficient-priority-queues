@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-type node[T BoNumber] struct {
+type node[T Number] struct {
 	value T
 	rank  int
 
@@ -23,7 +23,7 @@ type node[T BoNumber] struct {
 	parentViolatingList *list.List
 }
 
-func newNode[T BoNumber](value T) *node[T] {
+func newNode[T Number](value T) *node[T] {
 	node := new(node[T])
 	node.value = value
 	node.rank = 0

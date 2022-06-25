@@ -7,11 +7,11 @@ import (
 	"math"
 )
 
-type BoNumber interface {
-        int | int8 | int16 | int32 | int64 | float32 | float64
+type Number interface {
+	int | int8 | int16 | int32 | int64 | float32 | float64
 }
 
-type BrodalHeap[T BoNumber] struct {
+type BrodalHeap[T Number] struct {
 	t1s            *tree1Struct[T]
 	tree2          *tree[T]
 	violationNodes *list.List
@@ -19,7 +19,7 @@ type BrodalHeap[T BoNumber] struct {
 
 const ALPHA int = 10
 
-func NewEmptyHeap[T BoNumber]() *BrodalHeap[T] {
+func NewEmptyHeap[T Number]() *BrodalHeap[T] {
 	return &BrodalHeap[T]{
 		t1s:            newEmptyT1S[T](),
 		tree2:          nil,
@@ -27,7 +27,7 @@ func NewEmptyHeap[T BoNumber]() *BrodalHeap[T] {
 	}
 }
 
-func NewHeap[T BoNumber](value T) *BrodalHeap[T] {
+func NewHeap[T Number](value T) *BrodalHeap[T] {
 	bh := NewEmptyHeap[T]()
 	bh.t1s = newT1S(value, bh)
 	return bh
@@ -40,17 +40,6 @@ func (bh *BrodalHeap[T]) getTree(index int) *tree[T] {
 	return bh.tree2
 }
 
-// func (bh *BrodalHeap[T]) toString() string {
-// 	if bh.Empty() { return "" }
-
-// 	str := "Tree1:\n" + bh.getTree(1).ToString()
-// 	if bh.getTree(2) != nil {
-// 		str += "Tree2:\n" + bh.getTree(2).ToString()
-// 	}
-
-// 	return str
-// }
-
 func (bh *BrodalHeap[T]) Empty() bool {
 	return bh.getTree(1) == nil
 }
@@ -62,25 +51,6 @@ func (bh *BrodalHeap[T]) Min() T {
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////DeleteMin////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
-
-// func (bh *BrodalHeap[T]) size() int {
-// 	if bh.Empty() {
-// 		return 0
-// 	}
-
-// 	s := 1
-// 	for e := bh.getTree(1).Children().Front(); e != nil; e = e.Next() {
-// 		s += e.Value.(*node[T]).Size()
-// 	}
-
-// 	if bh.tree2 != nil {
-// 		s += 1
-// 		for e := bh.getTree(2).Children().Front(); e != nil; e = e.Next() {
-// 			s += e.Value.(*node[T]).Size()
-// 		}
-// 	}
-// 	return s
-// }
 
 func (bh *BrodalHeap[T]) DeleteMin() T {
 	min := bh.Min()
