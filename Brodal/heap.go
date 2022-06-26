@@ -27,9 +27,9 @@ func NewEmptyHeap[T Number]() *BrodalHeap[T] {
 	}
 }
 
-func NewHeap[T Number](value T) *BrodalHeap[T] {
+func NewHeap[T Number](value T, ident any) *BrodalHeap[T] {
 	bh := NewEmptyHeap[T]()
-	bh.t1s = newT1S(value, bh)
+	bh.t1s = newT1S(value, ident, bh)
 	return bh
 }
 
@@ -44,20 +44,20 @@ func (bh *BrodalHeap[T]) Empty() bool {
 	return bh.getTree(1) == nil
 }
 
-func (bh *BrodalHeap[T]) Min() T {
-	return bh.getTree(1).RootValue()
+func (bh *BrodalHeap[T]) Min() *node[T] {
+	return bh.getTree(1).root
 }
 
 //////////////////////////////////////////////////////////////////////////////
 /////////////////////////////////DeleteMin////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////
 
-func (bh *BrodalHeap[T]) DeleteMin() T {
+func (bh *BrodalHeap[T]) DeleteMin() *node[T] {
 	min := bh.Min()
 
 	if bh.getTree(2) != nil {
 		if bh.getTree(2).RootRank() == 0 && bh.getTree(1).RootRank() == 0 {
-			bh.t1s = newT1S(bh.getTree(2).RootValue(), bh)
+			bh.t1s = newT1S(bh.getTree(2).RootValue(), bh.getTree(2).root.Ident(), bh)
 			bh.tree2 = nil
 			return min
 		} else {
@@ -76,7 +76,7 @@ func (bh *BrodalHeap[T]) DeleteMin() T {
 	newMinV, newMinW := newMin.vList, newMin.wList
 	oldV, oldW := bh.getTree(1).vList(), bh.getTree(1).wList()
 
-	bh.t1s = newT1S(newMin.value, bh)
+	bh.t1s = newT1S(newMin.value, newMin.ident, bh)
 	bh.tree2 = nil
 
 	for e := trees.Back(); e != nil; e = e.Prev() {
@@ -134,8 +134,8 @@ func (bh *BrodalHeap[T]) DeleteMin() T {
 }
 
 func (bh *BrodalHeap[T]) DecreaseKey(child *node[T], newValue T) {
-	if newValue < bh.Min() {
-		child.value = bh.Min()
+	if newValue < bh.Min().Value() {
+		child.value = bh.Min().Value()
 		bh.getTree(1).SetRootValue(newValue)
 	} else {
 		child.SetValue(newValue)
@@ -148,8 +148,8 @@ func (bh *BrodalHeap[T]) Delete(child *node[T]) {
 	bh.DeleteMin()
 }
 
-func (bh *BrodalHeap[T]) Insert(value T) {
-	bh.Meld(NewHeap(value))
+func (bh *BrodalHeap[T]) Insert(value T, ident any) {
+	bh.Meld(NewHeap(value, ident))
 }
 
 //////////////////////////////////////////////////////////////////////////////

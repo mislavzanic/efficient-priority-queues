@@ -7,16 +7,16 @@ import (
 	"time"
 
 	"github.com/mislavzanic/heaps/Brodal"
-	"github.com/mislavzanic/heaps/Fibonacci"
+	// "github.com/mislavzanic/heaps/Fibonacci"
 )
 
-func testSorting[T Number](n int64) {
+func testSorting[T Number, I any](n int64) {
 	randArr := createRandomValueArray[T](n)
 	boHeap := Brodal.NewEmptyHeap[T]()
-	fbHeap := Fibonacci.NewFibHeap[T]()
+	// fbHeap := Fibonacci.NewFibHeap[T]()
 
 	sortingPerformance[T](boHeap, randArr)
-	sortingPerformance[T](fbHeap, randArr)
+	// sortingPerformance[T, I](fbHeap, randArr)
 }
 
 func testDijkstra[T Number](n int64) {
@@ -35,5 +35,5 @@ func main() {
 		heapSize = n
 	}
 
-	testSorting[float64](heapSize)
+	testSorting[float64, any](heapSize)
 }

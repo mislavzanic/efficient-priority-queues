@@ -8,6 +8,7 @@ import (
 
 type node[T Number] struct {
 	value T
+	ident any
 	rank  int
 
 	self          *list.Element
@@ -23,9 +24,10 @@ type node[T Number] struct {
 	parentViolatingList *list.List
 }
 
-func newNode[T Number](value T) *node[T] {
+func newNode[T Number](value T, ident any) *node[T] {
 	node := new(node[T])
 	node.value = value
+	node.ident = ident
 	node.rank = 0
 	node.children = list.New()
 	node.vList = list.New()
@@ -34,31 +36,13 @@ func newNode[T Number](value T) *node[T] {
 	return node
 }
 
-func (this *node[T]) Size() int {
-	if this.rank == 0 {
-		return 1
-	}
-	s := 1
-	for e := this.children.Front(); e != nil; e = e.Next() {
-		s += e.Value.(*node[T]).Size()
-	}
-	return s
+func (this *node[T]) Value() T {
+	return this.value
 }
 
-func (this *node[T]) ToString() string {
-	str := "\t\tValue:"
-	str += fmt.Sprint(this.value)
-	str += "\n\t\tRank:"
-	str += fmt.Sprint(this.rank)
-	if this.parent != nil {
-		str += "\n\t\tParent:"
-		str += fmt.Sprint(this.parent.value)
-	}
-	str += "\n\t\tChildren:\n"
-	for e := this.children.Front(); e != nil; e = e.Next() {
-		str += e.Value.(*node[T]).ToString()
-	}
-	return str + "\n"
+
+func (this *node[T]) Ident() any {
+	return this.ident
 }
 
 func (this *node[T]) Leaf() bool {

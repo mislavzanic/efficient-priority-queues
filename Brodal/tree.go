@@ -26,27 +26,15 @@ type tree[T Number] struct {
 	parentHeap      *BrodalHeap[T]
 }
 
-func newTree[T Number](value T, treeIndex uint, pH *BrodalHeap[T]) *tree[T] {
+func newTree[T Number](value T, ident any, treeIndex uint, pH *BrodalHeap[T]) *tree[T] {
 	return &tree[T]{
-		root:            newNode(value),
+		root:            newNode(value, ident),
 		id:              treeIndex,
 		childrenRank:    []*node[T]{},
 		upperBoundGuide: newGuide(UPPER_BOUND),
 		lowerBoundGuide: newGuide(LOWER_BOUND),
 		parentHeap: pH,
 	}
-}
-
-func (this *tree[T]) ToString() string {
-	str := this.root.ToString()
-	str += "\t" + this.upperBoundGuide.ToString()
-	str += "\t" + this.lowerBoundGuide.ToString()
-	str += "\tChildren Rank:\n"
-	str += "\t"
-	for i := 0; i < len(this.childrenRank); i++ {
-		str += fmt.Sprintf("val: %f, rank: %d", this.childrenRank[i].value, i) + "  "
-	}
-	return str + "\n"
 }
 
 func (this *tree[T]) RootRank() int {
