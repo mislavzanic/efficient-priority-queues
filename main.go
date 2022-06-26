@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"os"
 	"strconv"
@@ -11,27 +10,19 @@ import (
 	"github.com/mislavzanic/heaps/Fibonacci"
 )
 
-func testInsertAndDeleteMin[T float64](pq PriorityQueue[float64], randArr []float64) {
-	start := time.Now()
-	for _, n := range randArr {
-		pq.Insert(n)
-	}
-	elapsed := time.Since(start)
-	fmt.Printf("%s Meld vrijeme...\n", elapsed)
+func testSorting[T Number](n int64) {
+	randArr := createRandomValueArray[T](n)
+	boHeap := Brodal.NewEmptyHeap[T]()
+	fbHeap := Fibonacci.NewFibHeap[T]()
 
-	start = time.Now()
-	min := pq.Min()
-	for !pq.Empty() {
-		newMin := pq.DeleteMin()
-		if min > newMin {
-			panic("nije dobar min")
-		}
-		min = newMin
-	}
-	elapsed = time.Since(start)
-	fmt.Printf("%s DeleteMin vrijeme...\n", elapsed)
+	sortingPerformance[T](boHeap, randArr)
+	sortingPerformance[T](fbHeap, randArr)
 }
 
+func testDijkstra[T Number](n int64) {
+	// randMatrix := createRandomMatrix[T](n)
+
+}
 
 func main() {
 	rand.Seed(time.Now().Unix())
@@ -44,10 +35,5 @@ func main() {
 		heapSize = n
 	}
 
-	randArr := createRandomValueArray(heapSize)
-	boHeap := Brodal.NewEmptyHeap[float64]()
-	fbHeap := Fibonacci.NewFibHeap[float64]()
-
-	sortingPerformance[float64](boHeap, randArr)
-	sortingPerformance[float64](fbHeap, randArr)
+	testSorting[float64](heapSize)
 }

@@ -2,22 +2,8 @@ package main
 
 import (
 	"fmt"
-	"math/rand"
-	// "os"
-	// "strconv"
 	"time"
-
-	// "github.com/mislavzanic/heaps/Brodal"
-	// "github.com/mislavzanic/heaps/Fibonacci"
 )
-
-func createRandomValueArray(n int64) []float64 {
-	arr := []float64{}
-	for i := 0; int64(i) < n; i++ {
-		arr = append(arr, rand.Float64())
-	}
-	return arr
-}
 
 func sortingPerformance[T Number](pq PriorityQueue[T], randArr []T) {
 	start := time.Now()
